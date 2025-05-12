@@ -1,0 +1,2 @@
+# Menambahkan file serviceAccountKey.json agar tidak ter-track oleh Git
+backend/serviceAccountKey.json
