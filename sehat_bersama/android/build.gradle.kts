@@ -13,6 +13,7 @@ subprojects {
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
 subprojects {
+    // Remove or comment out this line unless you have a specific reason to force evaluation order.
     project.evaluationDependsOn(":app")
 }
 
