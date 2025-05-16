@@ -3,10 +3,10 @@ const router = express.Router();
 const { registerPatient, getPatientRegistrations, getPatientDetail } = require('../controllers/patientController');
 const authMiddleware = require('../middlewares/authMiddleware');
 
-// Apply auth middleware to all routes - ensures user is logged in
+// Terapkan middleware autentikasi ke semua rute - pastikan pengguna sudah login
 router.use(authMiddleware);
 
-// Patient registration routes
+// Patient registrasi routes
 router.post('/register', registerPatient);
 router.get('/registrations', getPatientRegistrations);
 router.get('/detail/:id', getPatientDetail);
