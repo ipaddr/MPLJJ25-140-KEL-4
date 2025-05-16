@@ -7,7 +7,6 @@ import 'screens/auth/register_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/verification_method_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
-import 'screens/auth/verification_method_screen.dart';
 import 'screens/auth/email_verification_screen.dart';
 import 'screens/auth/otp_verification_screen.dart';
 import 'screens/auth/login_petugas_screen.dart';
@@ -17,9 +16,7 @@ import 'screens/dashboard.dart';
 void main() {
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => UserProvider()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
       child: const SehatBersamaApp(),
     ),
   );
@@ -45,7 +42,6 @@ class SehatBersamaApp extends StatelessWidget {
         '/login-petugas': (_) => const LoginPetugasScreen(),
         '/dashboard-petugas': (_) => const DashboardPetugasScreen(),
         '/dashboard': (_) => const DashboardScreen(),
-
       },
     );
   }
