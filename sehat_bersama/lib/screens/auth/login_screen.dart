@@ -119,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
             SizedBox(
               child: ElevatedButton(
                 onPressed: () {
-                  // Proses login di sini
+                  Navigator.pushNamed(context, '/dashboard');
                 },
                 child: const Text("Masuk"),
               ),

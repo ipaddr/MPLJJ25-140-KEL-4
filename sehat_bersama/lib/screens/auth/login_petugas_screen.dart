@@ -129,8 +129,8 @@ class _LoginPetugasScreenState extends State<LoginPetugasScreen> {
                   width: 200,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Proses login
-                    },
+                    Navigator.pushNamed(context, '/dashboard-petugas'); 
+                },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF4A9DEB),
                       padding: const EdgeInsets.symmetric(vertical: 14),
