@@ -24,31 +24,32 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF07477C),
+      backgroundColor: const Color(0xFF0F5B99), // warna splash background tetap spesial
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Logo
             Image.asset(
               'assets/images/logo_putih.png',
               width: 160,
               height: 160,
             ),
-            const SizedBox(height: 24),
-            const Text(
-              "SEHAT BERSAMA",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
+
             const SizedBox(height: 8),
-            const Text(
+
+            // Tagline
+            Text(
               "Sehat Bersama, Bebas TBC Selamanya",
-              style: TextStyle(color: Colors.white70),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Colors.white,
+                    fontSize: 17,
+                  ),
             ),
+
             const SizedBox(height: 40),
+
+            // Tombol muncul setelah 2 detik
             AnimatedOpacity(
               opacity: _showButtons ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 500),
@@ -57,33 +58,28 @@ class _SplashScreenState extends State<SplashScreen> {
                       children: [
                         ElevatedButton(
                           onPressed: () {
-                            Navigator.pushNamed(context, '/signin');
+                            Navigator.pushNamed(context, '/login');
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF07477C),
-                            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
+                          // Gunakan default style dari elevatedButtonTheme
                           child: const Text("Mulai"),
                         ),
                         const SizedBox(height: 12),
                         ElevatedButton(
                           onPressed: () {
-                            Navigator.pushNamed(context, '/signup');
+                            Navigator.pushNamed(context, '/register');
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF07477C),
-                            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
                           child: const Text("Daftar"),
                         ),
+                        const SizedBox(height: 12),
+                        TextButton(
+                          onPressed: () {
+                          Navigator.pushNamed(context, '/login-petugas'); 
+                        },
+                          child: const Text(
+                            "Masuk sebagai petugas kesehatan",
+                            style: TextStyle(color: Color.fromARGB(255, 219, 231, 240)),
+                          ),
+                        )
                       ],
                     )
                   : const SizedBox.shrink(),
