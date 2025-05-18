@@ -11,7 +11,7 @@ import 'screens/auth/email_verification_screen.dart';
 import 'screens/auth/otp_verification_screen.dart';
 import 'screens/auth/login_petugas_screen.dart';
 import 'screens/petugas/dashboard_petugas.dart';
-import 'screens/dashboard.dart';
+import 'screens/dashboard/dashboard.dart';
 
 void main() {
   runApp(

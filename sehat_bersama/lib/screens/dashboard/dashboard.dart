@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../screens/medication/medication_reminder_screen.dart'; // Import the medication reminder screen
+import 'medication/medication_reminder_screen.dart'; // Import the medication reminder screen
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
