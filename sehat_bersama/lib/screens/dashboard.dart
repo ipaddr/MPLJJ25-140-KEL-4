@@ -70,7 +70,7 @@ class DashboardScreen extends StatelessWidget {
               // Menu Icon Grid
               Center(
                 child: SizedBox(
-                  width: 3 * 110 + 2 * 12, // 3 items * 80 width + 2 gaps * 12 spacing
+                  width: 3 * 115 + 2 * 12, // 3 items * 80 width + 2 gaps * 12 spacing
                   child: GridView.count(
                     crossAxisCount: 3,
                     shrinkWrap: true,
@@ -91,7 +91,7 @@ class DashboardScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 24),
-/*
+
               // Info Pemeriksaan
               Container(
                 padding: const EdgeInsets.all(16),
@@ -145,10 +145,10 @@ class DashboardScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    Icon(Icons.lock, size: 32, color: Colors.white),
+                    Icon(Icons.medical_services, size: 32, color: Colors.white),
                   ],
                 ),
-              ), */
+              ), 
 
               const SizedBox(height: 16),
 
