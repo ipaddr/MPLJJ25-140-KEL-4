@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../screens/medication/medication_reminder_screen.dart'; // Import the medication reminder screen
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -79,12 +80,24 @@ class DashboardScreen extends StatelessWidget {
                     crossAxisSpacing: 12,
                     childAspectRatio: 0.8,
                     children: [
-                      _buildMenuItem("Registrasi Online", Icons.description),
-                      _buildMenuItem("Penjadwalan Pemeriksaan", Icons.calendar_today),
-                      _buildMenuItem("Hasil Pemeriksaan", Icons.monitor_heart),
-                      _buildMenuItem("Screening TBC", Icons.fit_screen),
-                      _buildMenuItem("Pendaftaran Layanan (Antrean)", Icons.volunteer_activism),
-                      _buildMenuItem("Pengingat Obat", Icons.medical_services,),
+                      _buildMenuItem(context, "Registrasi Online", Icons.description),
+                      _buildMenuItem(context, "Penjadwalan Pemeriksaan", Icons.calendar_today),
+                      _buildMenuItem(context, "Hasil Pemeriksaan", Icons.monitor_heart),
+                      _buildMenuItem(context, "Screening TBC", Icons.fit_screen),
+                      _buildMenuItem(context, "Pendaftaran Layanan (Antrean)", Icons.volunteer_activism),
+                      _buildMenuItem(
+                        context,
+                        "Pengingat Obat", 
+                        Icons.medical_services,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MedicationReminderScreen(),
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -151,15 +164,6 @@ class DashboardScreen extends StatelessWidget {
               ), 
 
               const SizedBox(height: 16),
-
-              // Banner
-            //  ClipRRect(
-              //  borderRadius: BorderRadius.circular(12),
-                //child: Image.asset(
-                  //'assets/images/banner_tbc.png',
-                 // fit: BoxFit.cover,
-              //  ),
-           //   ), 
             ],
           ),
         ),
@@ -167,9 +171,14 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItem(String label, IconData icon) {
+  Widget _buildMenuItem(
+    BuildContext context,
+    String label, 
+    IconData icon, 
+    {VoidCallback? onTap}
+  ) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap ?? () {},
       child: Column(
         children: [
           CircleAvatar(
