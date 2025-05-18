@@ -12,6 +12,8 @@ import 'screens/auth/otp_verification_screen.dart';
 import 'screens/auth/login_petugas_screen.dart';
 import 'screens/petugas/dashboard_petugas.dart';
 import 'screens/dashboard/dashboard.dart';
+import 'screens/dashboard/registrasi/registrasi_screen.dart';
+import 'screens/dashboard/registrasi/registrasi_berhasil_screen.dart';
 
 void main() {
   runApp(
@@ -42,6 +44,8 @@ class SehatBersamaApp extends StatelessWidget {
         '/login-petugas': (_) => const LoginPetugasScreen(),
         '/dashboard-petugas': (_) => const DashboardPetugasScreen(),
         '/dashboard': (_) => const DashboardScreen(),
+        '/registrasi-online': (_) => const RegistrasiOnlineScreen(),
+        '/registrasi-berhasil': (_) => const RegistrasiBerhasilScreen(),
       },
     );
   }
