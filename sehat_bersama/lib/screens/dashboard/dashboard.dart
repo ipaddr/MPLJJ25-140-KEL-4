@@ -111,7 +111,14 @@ class DashboardScreen extends StatelessWidget {
                           Navigator.pushNamed(context, '/hasil');
                         },
                         ),
-                      _buildMenuItem(context, "Screening TBC", Icons.fit_screen),
+                        _buildMenuItem(
+                        context,
+                        "Screening TBC",
+                        Icons.fit_screen,
+                        onTap: () {
+                          Navigator.pushNamed(context, '/screening');
+                        },
+                        ),
                       _buildMenuItem(
                         context, 
                         "Pendaftaran Layanan (Antrean)", 

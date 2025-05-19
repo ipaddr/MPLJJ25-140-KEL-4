@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sehat_bersama/screens/dashboard/screening/screening_tbc_screen.dart';
 import 'theme/theme.dart';
 import 'providers/user_provider.dart';
 import 'screens/splash_screen.dart';
@@ -20,6 +21,7 @@ import 'screens/dashboard/antrean/checkin_antrean_berhasil_screen.dart';
 import 'screens/dashboard/penjadwalan/penjadwalan_screen.dart';
 import 'screens/dashboard/penjadwalan/jadwal_sukses_screen.dart';
 import 'screens/dashboard/hasil_pemeriksaan/hasil_pemeriksaan.dart';
+import 'screens/dashboard/screening/screening_tbc_screen.dart';
 
 void main() {
   runApp(
@@ -58,6 +60,7 @@ class SehatBersamaApp extends StatelessWidget {
         '/penjadwalan': (_) => const PenjadwalanScreen(),
         '/jadwal-sukses': (_) => const JadwalSuksesScreen(),
         '/hasil': (_) => const HasilPemeriksaanScreen(),
+        '/screening': (_) => const ScreeningTBCScreen(),
 
       },
     );
