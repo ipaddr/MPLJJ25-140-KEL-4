@@ -22,7 +22,10 @@ class DashboardScreen extends StatelessWidget {
         ],
         currentIndex: 0,
         onTap: (index) {
-          // Handle navigation
+          if (index == 3) {
+            Navigator.pushNamed(context, '/profile');
+          }
+          // Handle other navigation if needed
         },
       ),
       body: SafeArea(

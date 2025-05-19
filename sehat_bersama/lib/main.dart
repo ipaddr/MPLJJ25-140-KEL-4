@@ -22,6 +22,7 @@ import 'screens/dashboard/penjadwalan/penjadwalan_screen.dart';
 import 'screens/dashboard/penjadwalan/jadwal_sukses_screen.dart';
 import 'screens/dashboard/hasil_pemeriksaan/hasil_pemeriksaan.dart';
 import 'screens/dashboard/screening/screening_tbc_screen.dart';
+import 'screens/dashboard/akun/profile_screen.dart';
 
 void main() {
   runApp(
@@ -61,6 +62,7 @@ class SehatBersamaApp extends StatelessWidget {
         '/jadwal-sukses': (_) => const JadwalSuksesScreen(),
         '/hasil': (_) => const HasilPemeriksaanScreen(),
         '/screening': (_) => const ScreeningTBCScreen(),
+        '/profile': (_) => const ProfileScreen(),
 
       },
     );
