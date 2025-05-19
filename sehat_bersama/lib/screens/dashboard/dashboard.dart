@@ -103,7 +103,14 @@ class DashboardScreen extends StatelessWidget {
                           Navigator.pushNamed(context, '/penjadwalan');
                         },
                         ),
-                      _buildMenuItem(context, "Hasil Pemeriksaan", Icons.monitor_heart),
+                        _buildMenuItem(
+                        context,
+                        "Hasil Pemeriksaan",
+                        Icons.monitor_heart,
+                        onTap: () {
+                          Navigator.pushNamed(context, '/hasil');
+                        },
+                        ),
                       _buildMenuItem(context, "Screening TBC", Icons.fit_screen),
                       _buildMenuItem(
                         context, 
