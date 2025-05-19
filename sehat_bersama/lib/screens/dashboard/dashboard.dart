@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'medication/medication_reminder_screen.dart'; // Import the medication reminder screen
 import 'registrasi/registrasi_screen.dart';
+import 'antrean/layanan_antrean_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -97,7 +98,20 @@ class DashboardScreen extends StatelessWidget {
                       _buildMenuItem(context, "Penjadwalan Pemeriksaan", Icons.calendar_today),
                       _buildMenuItem(context, "Hasil Pemeriksaan", Icons.monitor_heart),
                       _buildMenuItem(context, "Screening TBC", Icons.fit_screen),
-                      _buildMenuItem(context, "Pendaftaran Layanan (Antrean)", Icons.volunteer_activism),
+                      _buildMenuItem(
+                        context, 
+                        "Pendaftaran Layanan (Antrean)", 
+                        Icons.volunteer_activism,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LayananAntreanScreen(),
+                            ),
+                          );
+                        },
+                      ),
+
                       _buildMenuItem(
                         context,
                         "Pengingat Obat", 

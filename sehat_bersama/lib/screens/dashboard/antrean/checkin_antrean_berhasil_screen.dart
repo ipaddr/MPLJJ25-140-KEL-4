@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class RegistrasiBerhasilScreen extends StatelessWidget {
-  const RegistrasiBerhasilScreen({super.key});
+class checkin_antrean_berhasil_screen extends StatelessWidget {
+  const checkin_antrean_berhasil_screen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -27,14 +27,14 @@ class RegistrasiBerhasilScreen extends StatelessWidget {
         ),
         const SizedBox(height: 32),
         const Text(
-          "Registrasi Pasien Berhasil",
+          "Check-In Antrean Berhasil",
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 32),
         const Icon(Icons.check_circle, color: Colors.green, size: 80),
         const SizedBox(height: 24),
         const Text(
-          "Silahkan Melakukan Penjadwalan Pemeriksaan pada Menu Utama",
+          "Silahkan Menunggu Antrean Anda Dipanggil",
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 14),
         ),

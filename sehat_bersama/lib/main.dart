@@ -14,6 +14,9 @@ import 'screens/petugas/dashboard_petugas.dart';
 import 'screens/dashboard/dashboard.dart';
 import 'screens/dashboard/registrasi/registrasi_screen.dart';
 import 'screens/dashboard/registrasi/registrasi_berhasil_screen.dart';
+import 'screens/dashboard/antrean/layanan_antrean_screen.dart';
+import 'screens/dashboard/antrean/cetak_antrean_screen.dart';
+import 'screens/dashboard/antrean/checkin_antrean_berhasil_screen.dart';
 
 void main() {
   runApp(
@@ -46,6 +49,9 @@ class SehatBersamaApp extends StatelessWidget {
         '/dashboard': (_) => const DashboardScreen(),
         '/registrasi-online': (_) => const RegistrasiOnlineScreen(),
         '/registrasi-berhasil': (_) => const RegistrasiBerhasilScreen(),
+        '/layanan-antrean': (_) => const LayananAntreanScreen(),
+        '/cetak-antrean': (_) => const CetakAntreanScreen(),
+        '/checkin-berhasil': (_) => const checkin_antrean_berhasil_screen(),
       },
     );
   }
