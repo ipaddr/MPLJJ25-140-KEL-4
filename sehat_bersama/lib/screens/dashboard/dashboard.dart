@@ -95,7 +95,14 @@ class DashboardScreen extends StatelessWidget {
                           );
                         },
                       ),
-                      _buildMenuItem(context, "Penjadwalan Pemeriksaan", Icons.calendar_today),
+                        _buildMenuItem(
+                        context,
+                        "Penjadwalan Pemeriksaan",
+                        Icons.calendar_today,
+                        onTap: () {
+                          Navigator.pushNamed(context, '/penjadwalan');
+                        },
+                        ),
                       _buildMenuItem(context, "Hasil Pemeriksaan", Icons.monitor_heart),
                       _buildMenuItem(context, "Screening TBC", Icons.fit_screen),
                       _buildMenuItem(

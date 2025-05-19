@@ -17,6 +17,8 @@ import 'screens/dashboard/registrasi/registrasi_berhasil_screen.dart';
 import 'screens/dashboard/antrean/layanan_antrean_screen.dart';
 import 'screens/dashboard/antrean/cetak_antrean_screen.dart';
 import 'screens/dashboard/antrean/checkin_antrean_berhasil_screen.dart';
+import 'screens/dashboard/penjadwalan/penjadwalan_screen.dart';
+import 'screens/dashboard/penjadwalan/jadwal_sukses_screen.dart';
 
 void main() {
   runApp(
@@ -52,6 +54,8 @@ class SehatBersamaApp extends StatelessWidget {
         '/layanan-antrean': (_) => const LayananAntreanScreen(),
         '/cetak-antrean': (_) => const CetakAntreanScreen(),
         '/checkin-berhasil': (_) => const checkin_antrean_berhasil_screen(),
+        '/penjadwalan': (_) => const PenjadwalanScreen(),
+        '/jadwal-sukses': (_) => const JadwalSuksesScreen(),
       },
     );
   }
