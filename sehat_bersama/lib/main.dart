@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sehat_bersama/screens/dashboard/screening/screening_tbc_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import flutter_dotenv
+
+// Import semua screen Anda (pastikan path-nya benar)
 import 'theme/theme.dart';
 import 'providers/user_provider.dart';
 import 'screens/splash_screen.dart';
@@ -23,8 +25,12 @@ import 'screens/dashboard/penjadwalan/jadwal_sukses_screen.dart';
 import 'screens/dashboard/hasil_pemeriksaan/hasil_pemeriksaan.dart';
 import 'screens/dashboard/screening/screening_tbc_screen.dart';
 import 'screens/dashboard/akun/profile_screen.dart';
+import 'screens/chatbot/chabot_screen.dart'; // Perbaiki typo jika nama file Anda 'chatbot_screen.dart'
 
-void main() {
+// Fungsi main() diubah menjadi async untuk await dotenv.load()
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Pastikan Flutter binding sudah siap
+  await dotenv.load(fileName: ".env");    // Muat environment variables dari file .env
   runApp(
     MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
@@ -41,7 +47,7 @@ class SehatBersamaApp extends StatelessWidget {
     return MaterialApp(
       title: 'Sehat Bersama',
       debugShowCheckedModeBanner: false,
-      theme: sehatBersamaTheme,
+      theme: sehatBersamaTheme, // Pastikan variabel theme ini ada dan terdefinisi
       home: const SplashScreen(),
       routes: {
         '/register': (_) => const RegisterScreen(),
@@ -57,13 +63,13 @@ class SehatBersamaApp extends StatelessWidget {
         '/registrasi-berhasil': (_) => const RegistrasiBerhasilScreen(),
         '/layanan-antrean': (_) => const LayananAntreanScreen(),
         '/cetak-antrean': (_) => const CetakAntreanScreen(),
-        '/checkin-berhasil': (_) => const checkin_antrean_berhasil_screen(),
+        '/checkin-berhasil': (_) => const checkin_antrean_berhasil_screen(), // Pastikan nama class konsisten
         '/penjadwalan': (_) => const PenjadwalanScreen(),
         '/jadwal-sukses': (_) => const JadwalSuksesScreen(),
         '/hasil': (_) => const HasilPemeriksaanScreen(),
         '/screening': (_) => const ScreeningTBCScreen(),
         '/profile': (_) => const ProfileScreen(),
-
+        '/chatbot': (_) => const ChatbotScreen(),
       },
     );
   }
