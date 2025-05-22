@@ -35,7 +35,9 @@ dependencies:
   intl: ^0.19.0
   table_calendar: ^3.1.1
   google_generative_ai: ^0.4.3
-
+  http: ^1.4.0
+  cached_network_image: ^3.2.3
+  
   # Pastikan semua dependensi lain Anda juga tercantum di sini
   # dengan format yang benar.
 

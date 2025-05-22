@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import flutter_dotenv
 
+
 // Import semua screen Anda (pastikan path-nya benar)
 import 'theme/theme.dart';
 import 'providers/user_provider.dart';
@@ -25,12 +26,15 @@ import 'screens/dashboard/penjadwalan/jadwal_sukses_screen.dart';
 import 'screens/dashboard/hasil_pemeriksaan/hasil_pemeriksaan.dart';
 import 'screens/dashboard/screening/screening_tbc_screen.dart';
 import 'screens/dashboard/akun/profile_screen.dart';
-import 'screens/chatbot/chabot_screen.dart'; // Perbaiki typo jika nama file Anda 'chatbot_screen.dart'
+import 'screens/chatbot/chabot_screen.dart'; 
+import 'screens/berita/berita_list_screen.dart'; // Import berita list screen
+import 'screens/berita/berita_detail_screen.dart'; // Import berita detail screen
 
 // Fungsi main() diubah menjadi async untuk await dotenv.load()
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Pastikan Flutter binding sudah siap
-  await dotenv.load(fileName: ".env");    // Muat environment variables dari file .env
+  await dotenv.load(fileName: ".env");
+  
   runApp(
     MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
@@ -70,6 +74,17 @@ class SehatBersamaApp extends StatelessWidget {
         '/screening': (_) => const ScreeningTBCScreen(),
         '/profile': (_) => const ProfileScreen(),
         '/chatbot': (_) => const ChatbotScreen(),
+        '/berita': (_) => const BeritaListScreen(), // Rute untuk berita
+        // '/berita-detail': (_) => const BeritaDetailScreen(), // Rute untuk detail berita
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/berita-detail') {
+          final args = settings.arguments as Map<String, dynamic>;
+          return MaterialPageRoute(
+            builder: (_) => BeritaDetailScreen(article: args['article']),
+          );
+        }
+        return null;
       },
     );
   }

@@ -38,10 +38,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       });
     } else if (index == 1) {
       // Navigasi ke halaman Berita
-      // Ganti dengan Navigator.pushNamed(context, '/berita'); jika ada
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Navigasi Berita belum diimplementasikan')),
-      );
+      Navigator.pushNamed(context, '/berita');
+      ;
       // Jika Berita adalah halaman penuh, Anda tidak perlu setState setelah navigasi
       // setState(() {
       //   _selectedIndex = index; // Hanya jika Berita adalah bagian dari body DashboardScreen
@@ -89,7 +87,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Image.asset(
-                    'assets/images/logo.png', // Pastikan path aset benar
+                    'assets/images/logo.png', 
                     height: 70,
                     errorBuilder: (context, error, stackTrace) { // Penanganan error jika gambar gagal dimuat
                       return const Icon(Icons.business, size: 70, color: Colors.grey);

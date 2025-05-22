@@ -16,7 +16,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Navigator.pushNamed(context, '/dashboard');
         break;
       case 1:
-        Navigator.pushNamed(context, '/news'); // ganti sesuai rute
+        Navigator.pushNamed(context, '/berita'); // ganti sesuai rute
         break;
       case 2:
         Navigator.pushNamed(context, '/chat'); // ganti sesuai rute
