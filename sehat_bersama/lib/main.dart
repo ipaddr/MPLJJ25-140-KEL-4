@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import flutter_dotenv
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/date_symbol_data_local.dart';
+ // Import flutter_dotenv
 
 
 // Import semua screen Anda (pastikan path-nya benar)
@@ -29,12 +31,15 @@ import 'screens/dashboard/akun/profile_screen.dart';
 import 'screens/chatbot/chabot_screen.dart'; 
 import 'screens/berita/berita_list_screen.dart'; // Import berita list screen
 import 'screens/berita/berita_detail_screen.dart'; // Import berita detail screen
+import 'screens/petugas/kelola_jadwal/kelola_jadwal_screen.dart' as kelola_jadwal; // Import kelola jadwal pemeriksaan
+import 'screens/petugas/kelola_jadwal/jadwal_list_screen.dart'; // Import jadwal list screen
 
 // Fungsi main() diubah menjadi async untuk await dotenv.load()
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Pastikan Flutter binding sudah siap
+  WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
-  
+  await initializeDateFormatting('id_ID', null); // Atau 'en_US' jika pakai format Inggris
+
   runApp(
     MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
@@ -51,7 +56,7 @@ class SehatBersamaApp extends StatelessWidget {
     return MaterialApp(
       title: 'Sehat Bersama',
       debugShowCheckedModeBanner: false,
-      theme: sehatBersamaTheme, // Pastikan variabel theme ini ada dan terdefinisi
+      theme: sehatBersamaTheme,
       home: const SplashScreen(),
       routes: {
         '/register': (_) => const RegisterScreen(),
@@ -67,24 +72,32 @@ class SehatBersamaApp extends StatelessWidget {
         '/registrasi-berhasil': (_) => const RegistrasiBerhasilScreen(),
         '/layanan-antrean': (_) => const LayananAntreanScreen(),
         '/cetak-antrean': (_) => const CetakAntreanScreen(),
-        '/checkin-berhasil': (_) => const checkin_antrean_berhasil_screen(), // Pastikan nama class konsisten
+        '/checkin-berhasil': (_) => const checkin_antrean_berhasil_screen(),
         '/penjadwalan': (_) => const PenjadwalanScreen(),
         '/jadwal-sukses': (_) => const JadwalSuksesScreen(),
         '/hasil': (_) => const HasilPemeriksaanScreen(),
         '/screening': (_) => const ScreeningTBCScreen(),
         '/profile': (_) => const ProfileScreen(),
         '/chatbot': (_) => const ChatbotScreen(),
-        '/berita': (_) => const BeritaListScreen(), // Rute untuk berita
-        // '/berita-detail': (_) => const BeritaDetailScreen(), // Rute untuk detail berita
+        '/kelola-jadwal': (_) => const kelola_jadwal.KelolaJadwalScreen(),
+        '/berita': (_) => const BeritaListScreen(),
       },
       onGenerateRoute: (settings) {
+        if (settings.name == '/list-jadwal') {
+          return MaterialPageRoute(
+            builder: (context) => const JadwalListScreen(),
+          );
+        }
         if (settings.name == '/berita-detail') {
           final args = settings.arguments as Map<String, dynamic>;
           return MaterialPageRoute(
             builder: (_) => BeritaDetailScreen(article: args['article']),
           );
         }
-        return null;
+        // Default fallback
+        return MaterialPageRoute(
+          builder: (context) => const SplashScreen(),
+        );
       },
     );
   }

@@ -48,7 +48,7 @@ class DashboardPetugasScreen extends StatelessWidget {
                     icon: Icons.event_note,
                     label: "Kelola Jadwal Pemeriksaan",
                     onTap: () {
-                      Navigator.pushNamed(context, '/jadwal-pemeriksaan');
+                      Navigator.pushNamed(context, '/list-jadwal');
                     },
                   ),
                   const SizedBox(height: 16),
