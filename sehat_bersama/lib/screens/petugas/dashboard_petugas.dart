@@ -66,7 +66,7 @@ class DashboardPetugasScreen extends StatelessWidget {
                     icon: Icons.medical_services,
                     label: "Kelola Jadwal Obat Pasien",
                     onTap: () {
-                      Navigator.pushNamed(context, '/jadwal-obat');
+                      Navigator.pushNamed(context, '/kelola-obat');
                     },
                   ),
                 ],

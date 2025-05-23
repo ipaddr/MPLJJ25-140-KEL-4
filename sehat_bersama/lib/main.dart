@@ -34,6 +34,7 @@ import 'screens/berita/berita_detail_screen.dart'; // Import berita detail scree
 import 'screens/petugas/kelola_jadwal/kelola_jadwal_screen.dart' as kelola_jadwal; // Import kelola jadwal pemeriksaan
 import 'screens/petugas/kelola_jadwal/jadwal_list_screen.dart'; // Import jadwal list screen
 import 'screens/petugas/hasil_pemeriksaan/input_hasil_screen.dart'; // Import input hasil pemeriksaan
+import 'screens/petugas/kelola_obat/kelola_obat_screen.dart';
 
 // Fungsi main() diubah menjadi async untuk await dotenv.load()
 Future<void> main() async {
@@ -83,6 +84,7 @@ class SehatBersamaApp extends StatelessWidget {
         '/kelola-jadwal': (_) => const kelola_jadwal.KelolaJadwalScreen(),
         '/input-hasil': (_) => const InputHasilPemeriksaanScreen(),
         '/berita': (_) => const BeritaListScreen(),
+        '/kelola-obat': (_) => const KelolaJadwalObatScreen (),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/list-jadwal') {
