@@ -57,7 +57,7 @@ class DashboardPetugasScreen extends StatelessWidget {
                     icon: Icons.cloud_upload,
                     label: "Upload Hasil Pemeriksaan",
                     onTap: () {
-                      Navigator.pushNamed(context, '/upload-hasil');
+                      Navigator.pushNamed(context, '/input-hasil');
                     },
                   ),
                   const SizedBox(height: 16),

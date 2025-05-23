@@ -37,6 +37,7 @@ dependencies:
   google_generative_ai: ^0.4.3
   http: ^1.4.0
   cached_network_image: ^3.2.3
+  file_picker: ^10.1.9
   
   
   # Pastikan semua dependensi lain Anda juga tercantum di sini
