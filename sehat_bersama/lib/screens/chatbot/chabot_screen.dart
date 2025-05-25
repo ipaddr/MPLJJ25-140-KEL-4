@@ -198,7 +198,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     }
   }
 
-  Widget _buildMessage(ChatMessage message) {
+    Widget _buildMessage(ChatMessage message) {
+    final isUser = message.isUserMessage;
+    final bubbleColor = isUser ? const Color(0xFF07477C) : Colors.white;
+    final textColor = isUser ? Colors.white : Colors.black87;
+    final border = isUser
+        ? null
+        : Border.all(color: const Color(0xFF07477C), width: 1);
+
     if (message.isLoading) {
       return Container(
         margin: const EdgeInsets.symmetric(vertical: 10.0),
@@ -207,38 +214,65 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           children: <Widget>[
             const Padding(
               padding: EdgeInsets.only(right: 8.0),
-              child: CircleAvatar(child: Icon(Icons.support_agent)),
+              child: CircleAvatar(child: Icon(Icons.support_agent, color: Color(0xFF07477C))),
             ),
             const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
           ],
         ),
       );
     }
+
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 10.0),
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
-        mainAxisAlignment: message.isUserMessage ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          if (!message.isUserMessage)
+          if (!isUser)
             const Padding(
               padding: EdgeInsets.only(right: 8.0, top: 4.0),
-              child: CircleAvatar(child: Icon(Icons.support_agent)),
+              child: CircleAvatar(
+                backgroundColor: Color(0xFF07477C),
+                child: Icon(Icons.support_agent, color: Colors.white),
+              ),
             ),
           Flexible(
             child: Container(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
               decoration: BoxDecoration(
-                color: message.isUserMessage ? Colors.blue[100] : Colors.grey[300],
-                borderRadius: BorderRadius.circular(12.0),
+                color: bubbleColor,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(18),
+                  topRight: const Radius.circular(18),
+                  bottomLeft: Radius.circular(isUser ? 18 : 4),
+                  bottomRight: Radius.circular(isUser ? 4 : 18),
+                ),
+                border: border,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 2,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
               ),
-              child: Text(message.text),
+              child: Text(
+                message.text,
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 15.5,
+                  height: 1.4,
+                ),
+              ),
             ),
           ),
-          if (message.isUserMessage)
+          if (isUser)
             const Padding(
               padding: EdgeInsets.only(left: 8.0, top: 4.0),
-              child: CircleAvatar(child: Icon(Icons.person)),
+              child: CircleAvatar(
+                backgroundColor: Color(0xFF07477C),
+                child: Icon(Icons.person, color: Colors.white),
+              ),
             ),
         ],
       ),

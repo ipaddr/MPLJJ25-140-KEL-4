@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "473490320331",
+    "project_id": "sehatbersama-9c2af",
+    "storage_bucket": "sehatbersama-9c2af.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:473490320331:android:c9152bebe6c2d5cb69a44e",
+        "android_client_info": {
+          "package_name": "com.example.sehat_bersama"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsmDGx0ZUUVFlfbcPtaurZYxxmwL56gDo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

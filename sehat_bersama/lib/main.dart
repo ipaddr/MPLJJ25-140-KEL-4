@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
- // Import flutter_dotenv
-
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 // Import semua screen Anda (pastikan path-nya benar)
 import 'theme/theme.dart';
@@ -29,18 +29,20 @@ import 'screens/dashboard/hasil_pemeriksaan/hasil_pemeriksaan.dart';
 import 'screens/dashboard/screening/screening_tbc_screen.dart';
 import 'screens/dashboard/akun/profile_screen.dart';
 import 'screens/chatbot/chabot_screen.dart'; 
-import 'screens/berita/berita_list_screen.dart'; // Import berita list screen
-import 'screens/berita/berita_detail_screen.dart'; // Import berita detail screen
-import 'screens/petugas/kelola_jadwal/kelola_jadwal_screen.dart' as kelola_jadwal; // Import kelola jadwal pemeriksaan
-import 'screens/petugas/kelola_jadwal/jadwal_list_screen.dart'; // Import jadwal list screen
-import 'screens/petugas/hasil_pemeriksaan/input_hasil_screen.dart'; // Import input hasil pemeriksaan
+import 'screens/berita/berita_list_screen.dart';
+import 'screens/berita/berita_detail_screen.dart';
+import 'screens/petugas/kelola_jadwal/kelola_jadwal_screen.dart' as kelola_jadwal;
+import 'screens/petugas/kelola_jadwal/jadwal_list_screen.dart';
+import 'screens/petugas/hasil_pemeriksaan/input_hasil_screen.dart';
 import 'screens/petugas/kelola_obat/kelola_obat_screen.dart';
 
-// Fungsi main() diubah menjadi async untuk await dotenv.load()
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
-  await initializeDateFormatting('id_ID', null); // Atau 'en_US' jika pakai format Inggris
+  await initializeDateFormatting('id_ID', null);
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   runApp(
     MultiProvider(
@@ -84,7 +86,7 @@ class SehatBersamaApp extends StatelessWidget {
         '/kelola-jadwal': (_) => const kelola_jadwal.KelolaJadwalScreen(),
         '/input-hasil': (_) => const InputHasilPemeriksaanScreen(),
         '/berita': (_) => const BeritaListScreen(),
-        '/kelola-obat': (_) => const KelolaJadwalObatScreen (),
+        '/kelola-obat': (_) => const KelolaJadwalObatScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/list-jadwal') {

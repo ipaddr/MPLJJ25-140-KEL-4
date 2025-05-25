@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-// Pastikan path import sesuai dengan struktur folder Anda
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'medication/medication_reminder_screen.dart';
-import 'registrasi/registrasi_screen.dart'; // Asumsi ini adalah RegistrasiOnlineScreen
+import 'registrasi/registrasi_screen.dart';
 import 'antrean/layanan_antrean_screen.dart';
-// Tidak perlu import ChatbotScreen di sini jika menggunakan Navigator.pushNamed
-// dan rutenya sudah terdaftar di main.dart
 
-class DashboardScreen extends StatefulWidget { // Mengubah menjadi StatefulWidget
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   @override
@@ -14,50 +14,113 @@ class DashboardScreen extends StatefulWidget { // Mengubah menjadi StatefulWidge
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _selectedIndex = 0; // Untuk melacak item yang dipilih di BottomNavigationBar
+  int _selectedIndex = 0;
+  String? _userName;
+  String? _userStatus;
+  bool _isLoading = true;
 
-  // Daftar widget untuk ditampilkan berdasarkan tab yang dipilih (jika ada)
-  // Untuk kasus ini, semua navigasi bottom bar membuka halaman baru,
-  // jadi _widgetOptions mungkin tidak langsung digunakan untuk mengganti body.
-  // Namun, _selectedIndex tetap berguna untuk currentIndex BottomNavigationBar.
-  // static final List<Widget> _widgetOptions = <Widget>[
-  //   DashboardHomeContent(), // Konten utama dashboard Anda (jika Home tidak memuat ulang seluruh DashboardScreen)
-  //   BeritaScreen(), // Jika Berita adalah bagian dari body Dashboard
-  //   ChatbotScreen(), // Tidak ditampilkan di sini karena navigasi ke halaman penuh
-  //   ProfileScreen(), // Tidak ditampilkan di sini karena navigasi ke halaman penuh
-  // ];
+  Map<String, dynamic>? _appointmentData;
+  Map<String, dynamic>? _medicationData;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDashboardData();
+  }
+
+  Future<void> _fetchDashboardData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        _userName = userDoc.data()?['name'] ?? 'Pengguna';
+        _userStatus = userDoc.data()?['status'] ?? 'Aktif';
+
+        final appointmentQuery = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('appointments')
+            .orderBy('dateTime', descending: false)
+            .limit(1)
+            .get();
+
+        if (appointmentQuery.docs.isNotEmpty) {
+          _appointmentData = appointmentQuery.docs.first.data();
+        } else {
+          _appointmentData = null;
+        }
+
+        final medicationQuery = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('medications')
+            .orderBy('reminderTime')
+            .limit(1)
+            .get();
+
+        if (medicationQuery.docs.isNotEmpty) {
+          _medicationData = medicationQuery.docs.first.data();
+        } else {
+          _medicationData = null;
+        }
+      } catch (e) {
+        _userName = 'Pengguna';
+        _userStatus = 'Gagal memuat';
+        _appointmentData = null;
+        _medicationData = null;
+      }
+    } else {
+      _userName = 'Pengguna';
+      _userStatus = 'Tidak Login';
+      _appointmentData = null;
+      _medicationData = null;
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
 
   void _onItemTapped(int index) {
     if (index == 0) {
-      // Jika Home adalah tampilan saat ini dan tidak perlu navigasi,
-      // cukup update state jika diperlukan.
-      // Jika DashboardScreen sendiri adalah "Home", maka tidak perlu aksi khusus
-      // selain memperbarui _selectedIndex.
+      if (!_isLoading) {
+        _fetchDashboardData();
+      }
       setState(() {
         _selectedIndex = index;
       });
     } else if (index == 1) {
-      // Navigasi ke halaman Berita
       Navigator.pushNamed(context, '/berita');
-      ;
-      // Jika Berita adalah halaman penuh, Anda tidak perlu setState setelah navigasi
-      // setState(() {
-      //   _selectedIndex = index; // Hanya jika Berita adalah bagian dari body DashboardScreen
-      // });
     } else if (index == 2) {
-      // Navigasi ke halaman Chatbot
       Navigator.pushNamed(context, '/chatbot');
-      // Tidak perlu setState untuk _selectedIndex di sini karena kita pindah halaman
-      // dan saat kembali, DashboardScreen akan rebuild dengan _selectedIndex yang terakhir (jika diinginkan)
-      // atau Anda bisa membiarkan _selectedIndex tetap pada tab sebelumnya saat kembali.
-      // Untuk konsistensi visual saat kembali, mungkin lebih baik tidak mengubah _selectedIndex di sini
-      // kecuali jika Anda ingin tab Chat menjadi aktif setelah kembali.
     } else if (index == 3) {
-      // Navigasi ke halaman Profile
       Navigator.pushNamed(context, '/profile');
     }
   }
 
+  String _formatAppointment(Map<String, dynamic>? data) {
+    if (data == null) return "Tidak ada jadwal";
+    String hospitalName = data['hospitalName'] ?? 'Nama Rumah Sakit Tidak Ada';
+    Timestamp? appointmentTimestamp = data['dateTime'] as Timestamp?;
+    String dateTimeStr = "Tanggal tidak tersedia";
+
+    if (appointmentTimestamp != null) {
+      DateTime appointmentDateTime = appointmentTimestamp.toDate();
+      dateTimeStr = DateFormat('d MMMM yyyy, HH:mm', 'id_ID').format(appointmentDateTime) + " WIB";
+    }
+    return "$hospitalName\n$dateTimeStr";
+  }
+
+  String _formatMedication(Map<String, dynamic>? data) {
+    if (data == null) return "Tidak ada pengingat obat";
+    String medicationName = data['medicationName'] ?? 'Nama Obat Tidak Ada';
+    String medicationTimeStr = data['medicationTime'] ?? 'Waktu tidak tersedia';
+    return "$medicationName - $medicationTimeStr";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,12 +131,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         selectedItemColor: const Color(0xFF07477C),
         unselectedItemColor: Colors.grey,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"), // index 0
-          BottomNavigationBarItem(icon: Icon(Icons.article), label: "Berita"), // index 1
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Chat"), // index 2
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"), // index 3
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.article), label: "Berita"),
+          BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Chat"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
         ],
-        currentIndex: _selectedIndex, // Gunakan _selectedIndex di sini
+        currentIndex: _selectedIndex,
         onTap: _onItemTapped,
       ),
       body: SafeArea(
@@ -87,39 +150,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Image.asset(
-                    'assets/images/logo.png', 
+                    'assets/images/logo.png',
                     height: 70,
-                    errorBuilder: (context, error, stackTrace) { // Penanganan error jika gambar gagal dimuat
+                    errorBuilder: (context, error, stackTrace) {
                       return const Icon(Icons.business, size: 70, color: Colors.grey);
                     },
                   ),
                   const SizedBox(width: 12),
-                  const Expanded( // Data pengguna bisa diambil dari UserProvider jika sudah login
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text("Hi, Susi ", // Idealnya nama pengguna dinamis
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                )),
-                            Icon(Icons.verified, color: Colors.green, size: 18),
-                          ],
-                        ),
-                        Text(
-                          "Semua Keluarga Anda Terlindungi (Aktif)", // Status dinamis
-                          style: TextStyle(fontSize: 12, color: Colors.black54),
-                        ),
-                      ],
-                    ),
+                  Expanded(
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    "Hi, ${_userName ?? '...'} ",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  if (_userStatus == 'Aktif' || _userStatus == 'Terverifikasi')
+                                    const Icon(Icons.verified, color: Colors.green, size: 18),
+                                ],
+                              ),
+                              Text(
+                                "Status: ${_userStatus ?? '...'}",
+                                style: const TextStyle(fontSize: 12, color: Colors.black54),
+                              ),
+                            ],
+                          ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.notifications_none_outlined), // Ikon notifikasi
+                    icon: const Icon(Icons.notifications_none_outlined),
                     onPressed: () {
-                      // Aksi untuk tombol notifikasi
-                       ScaffoldMessenger.of(context).showSnackBar(
+                      ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Tombol Notifikasi diklik!')),
                       );
                     },
@@ -132,9 +199,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               // Menu Icon Grid
               Center(
                 child: SizedBox(
-                  // Pertimbangkan menggunakan MediaQuery untuk lebar yang lebih responsif
-                  // Contoh: width: MediaQuery.of(context).size.width * 0.9,
-                  width: 3 * 115 + 2 * 12, // Kalkulasi ini mungkin perlu disesuaikan
+                  width: 3 * 115 + 2 * 12,
                   child: GridView.count(
                     crossAxisCount: 3,
                     shrinkWrap: true,
@@ -148,13 +213,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         "Registrasi Online",
                         Icons.description_outlined,
                         onTap: () {
-                          // Menggunakan pushNamed jika rute '/registrasi-online' sudah ada di main.dart
-                          // Navigator.pushNamed(context, '/registrasi-online');
-                          // Atau tetap menggunakan MaterialPageRoute jika belum
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const RegistrasiOnlineScreen(), // Pastikan RegistrasiOnlineScreen ada
+                              builder: (context) => const RegistrasiOnlineScreen(),
                             ),
                           );
                         },
@@ -178,17 +240,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       _buildMenuItem(
                         context,
                         "Screening TBC",
-                        Icons.screen_search_desktop_outlined, // Ikon yang mungkin lebih relevan
+                        Icons.screen_search_desktop_outlined,
                         onTap: () {
                           Navigator.pushNamed(context, '/screening');
                         },
                       ),
                       _buildMenuItem(
                         context,
-                        "Pendaftaran Layanan (Antrean)",
-                        Icons.groups_outlined, // Ikon yang mungkin lebih relevan
+                        "Layanan Antrean",
+                        Icons.groups_outlined,
                         onTap: () {
-                          // Navigator.pushNamed(context, '/layanan-antrean'); // Jika rute ada
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -200,7 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       _buildMenuItem(
                         context,
                         "Pengingat Obat",
-                        Icons.medication_liquid_outlined, // Ikon yang mungkin lebih relevan
+                        Icons.medication_liquid_outlined,
                         onTap: () {
                           Navigator.push(
                             context,
@@ -217,89 +278,110 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               const SizedBox(height: 24),
 
-              // Info Pemeriksaan (Contoh data statis, idealnya dinamis)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE3F2FD), // Warna biru muda yang lebih soft
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
-                      spreadRadius: 1,
-                      blurRadius: 3,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded( // Agar teks bisa wrap jika panjang
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Jadwal Pemeriksaan Terdekat", style: TextStyle(color: Color(0xFF0D47A1), fontSize: 13)),
-                          SizedBox(height: 4),
-                          Text(
-                            "RS Sehat Bersama\n29 April 2025, 10:00 WIB", // Tambahkan jam jika ada
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF0D47A1), // Biru tua untuk teks penting
-                              fontSize: 15,
+              // Info Pemeriksaan
+              if (_isLoading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              else if (_appointmentData != null)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE3F2FD),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.2),
+                        spreadRadius: 1,
+                        blurRadius: 3,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Jadwal Pemeriksaan Terdekat", style: TextStyle(color: Color(0xFF0D47A1), fontSize: 13)),
+                            const SizedBox(height: 4),
+                            Text(
+                              _formatAppointment(_appointmentData),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0D47A1),
+                                fontSize: 15,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    Icon(Icons.calendar_month_outlined, size: 36, color: Color(0xFF07477C)),
-                  ],
+                      const Icon(Icons.calendar_month_outlined, size: 36, color: Color(0xFF07477C)),
+                    ],
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 16),
+              if (!_isLoading && _appointmentData != null) const SizedBox(height: 16),
 
-              // Info Obat (Contoh data statis, idealnya dinamis)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF07477C),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blueGrey.withOpacity(0.3),
-                      spreadRadius: 1,
-                      blurRadius: 3,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Minum obat anda hari ini!",
-                            style: TextStyle(color: Colors.white, fontSize: 13),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            "Acetaminophen - 08:00 WIB", // Format lebih jelas
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, color: Colors.white, fontSize: 15),
-                          ),
-                        ],
+              // Info Obat
+              if (!_isLoading && _medicationData != null)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF07477C),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.blueGrey.withOpacity(0.3),
+                        spreadRadius: 1,
+                        blurRadius: 3,
+                        offset: const Offset(0, 2),
                       ),
-                    ),
-                    Icon(Icons.medical_information_outlined, size: 36, color: Colors.white),
-                  ],
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Minum obat anda hari ini!",
+                              style: TextStyle(color: Colors.white, fontSize: 13),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _formatMedication(_medicationData),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, color: Colors.white, fontSize: 15),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.medical_information_outlined, size: 36, color: Colors.white),
+                    ],
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 16), // Spasi tambahan di akhir
+              if (!_isLoading && _medicationData != null) const SizedBox(height: 16),
+
+              if (!_isLoading && _appointmentData == null && _medicationData == null)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20.0),
+                    child: Text(
+                      "Tidak ada jadwal pemeriksaan atau pengingat obat saat ini.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -316,10 +398,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return InkWell(
       onTap: onTap ?? () {},
       borderRadius: BorderRadius.circular(12),
-      child: Container( // Memberikan sedikit padding dan dekorasi jika diinginkan
+      child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
         decoration: BoxDecoration(
-          // color: Colors.grey[100], // Latar belakang ringan untuk item menu
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
@@ -327,14 +408,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             CircleAvatar(
               backgroundColor: const Color(0xFF07477C),
-              radius: 28, // Sedikit lebih kecil agar tidak terlalu dominan
+              radius: 28,
               child: Icon(icon, color: Colors.white, size: 26),
             ),
             const SizedBox(height: 8),
             Text(
               label,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 11.5, color: Colors.black87), // Ukuran font sedikit disesuaikan
+              style: const TextStyle(fontSize: 11.5, color: Colors.black87),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),

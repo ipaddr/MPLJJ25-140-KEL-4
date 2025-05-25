@@ -23,12 +23,14 @@ class VerificationMethodScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Image.asset('assets/images/logo.png', height: 100),
             const SizedBox(height: 24),
             const Text(
-              "Pilih salah satu metode verifikasi dibawah ini",
+              "Pilih salah satu metode verifikasi di bawah ini",
               textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 24),
             Card(
@@ -36,20 +38,47 @@ class VerificationMethodScreen extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               child: ListTile(
                 leading: const Icon(Icons.email, color: Color(0xFF0F5B99)),
-                title: const Text("Email"),
+                title: const Text("Verifikasi via Email"),
                 onTap: () {
                   Navigator.pushNamed(context, '/email-verification');
                 },
               ),
             ),
             const SizedBox(height: 12),
+            Card(
+              elevation: 3,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              child: ListTile(
+                leading: const Icon(Icons.sms, color: Color(0xFF0F5B99)),
+                title: const Text("Verifikasi via SMS"),
+                onTap: () {
+                  Navigator.pushNamed(context, '/otp-verification', arguments: {'method': 'sms'});
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                // Tambahkan aksi jika email tidak aktif, misal tampilkan dialog bantuan
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text("Bantuan"),
+                    content: const Text("Silakan hubungi admin untuk bantuan reset akun jika email Anda sudah tidak aktif."),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text("Tutup"),
+                      ),
+                    ],
+                  ),
+                );
+              },
               child: const Text(
-                "Email Saya sudah tidak aktif",
+                "Email saya sudah tidak aktif",
                 style: TextStyle(color: Color(0xFF0F5B99)),
               ),
-            )
+            ),
           ],
         ),
       ),
