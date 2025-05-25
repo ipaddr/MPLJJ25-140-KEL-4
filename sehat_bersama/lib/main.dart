@@ -4,8 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-
-// Import semua screen Anda (pastikan path-nya benar)
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'theme/theme.dart';
 import 'providers/user_provider.dart';
 import 'screens/splash_screen.dart';
@@ -28,10 +27,11 @@ import 'screens/dashboard/penjadwalan/jadwal_sukses_screen.dart';
 import 'screens/dashboard/hasil_pemeriksaan/hasil_pemeriksaan.dart';
 import 'screens/dashboard/screening/screening_tbc_screen.dart';
 import 'screens/dashboard/akun/profile_screen.dart';
-import 'screens/chatbot/chabot_screen.dart'; 
+import 'screens/chatbot/chabot_screen.dart';
 import 'screens/berita/berita_list_screen.dart';
 import 'screens/berita/berita_detail_screen.dart';
-import 'screens/petugas/kelola_jadwal/kelola_jadwal_screen.dart' as kelola_jadwal;
+import 'screens/petugas/kelola_jadwal/kelola_jadwal_screen.dart'
+    as kelola_jadwal;
 import 'screens/petugas/kelola_jadwal/jadwal_list_screen.dart';
 import 'screens/petugas/hasil_pemeriksaan/input_hasil_screen.dart';
 import 'screens/petugas/kelola_obat/kelola_obat_screen.dart';
@@ -40,9 +40,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await initializeDateFormatting('id_ID', null);
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(
     MultiProvider(
@@ -61,6 +59,13 @@ class SehatBersamaApp extends StatelessWidget {
       title: 'Sehat Bersama',
       debugShowCheckedModeBanner: false,
       theme: sehatBersamaTheme,
+      locale: const Locale('id', 'ID'),
+      supportedLocales: const [Locale('id', 'ID'), Locale('en', 'US')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: const SplashScreen(),
       routes: {
         '/register': (_) => const RegisterScreen(),
@@ -70,7 +75,6 @@ class SehatBersamaApp extends StatelessWidget {
         '/email-verification': (_) => const EmailVerificationScreen(),
         '/otp-verification': (_) => const OtpVerificationScreen(),
         '/login-petugas': (_) => const LoginPetugasScreen(),
-        '/dashboard-petugas': (_) => const DashboardPetugasScreen(),
         '/dashboard': (_) => const DashboardScreen(),
         '/registrasi-online': (_) => const RegistrasiOnlineScreen(),
         '/registrasi-berhasil': (_) => const RegistrasiBerhasilScreen(),
@@ -78,7 +82,8 @@ class SehatBersamaApp extends StatelessWidget {
         '/cetak-antrean': (_) => const CetakAntreanScreen(),
         '/checkin-berhasil': (_) => const checkin_antrean_berhasil_screen(),
         '/penjadwalan': (_) => const PenjadwalanScreen(),
-        '/jadwal-sukses': (_) => const JadwalSuksesScreen(),
+        // Hapus '/jadwal-sukses' dari routes karena butuh parameter!
+        '/dashboard-petugas': (_) => const DashboardPetugasScreen(),
         '/hasil': (_) => const HasilPemeriksaanScreen(),
         '/screening': (_) => const ScreeningTBCScreen(),
         '/profile': (_) => const ProfileScreen(),
@@ -101,9 +106,7 @@ class SehatBersamaApp extends StatelessWidget {
           );
         }
         // Default fallback
-        return MaterialPageRoute(
-          builder: (context) => const SplashScreen(),
-        );
+        return MaterialPageRoute(builder: (context) => const SplashScreen());
       },
     );
   }

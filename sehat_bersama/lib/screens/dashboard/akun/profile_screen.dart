@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -9,21 +11,62 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _notifOn = true;
+  String? _nama;
+  String? _nik;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    setState(() {
+      _loading = true;
+    });
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
+      setState(() {
+        _nama = doc.data()?['name'] ?? '-';
+        _nik = doc.data()?['nik'] ?? '-';
+        _loading = false;
+      });
+    } else {
+      setState(() {
+        _nama = '-';
+        _nik = '-';
+        _loading = false;
+      });
+    }
+  }
 
   void _onNavBarTap(int index) {
     switch (index) {
       case 0:
-        Navigator.pushNamed(context, '/dashboard');
+        Navigator.pushReplacementNamed(context, '/dashboard');
         break;
       case 1:
-        Navigator.pushNamed(context, '/berita'); // ganti sesuai rute
+        Navigator.pushReplacementNamed(context, '/berita');
         break;
       case 2:
-        Navigator.pushNamed(context, '/chat'); // ganti sesuai rute
+        Navigator.pushReplacementNamed(context, '/chatbot');
         break;
       case 3:
         // Stay on current page
         break;
+    }
+  }
+
+  Future<void> _logout() async {
+    await FirebaseAuth.instance.signOut();
+    if (mounted) {
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
     }
   }
 
@@ -67,15 +110,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                   child: Column(
-                    children: const [
-                      SizedBox(height: 40),
-                      Text(
-                        "Susi",
-                        style:
-                            TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 4),
-                      Text("0000000000000000"),
+                    children: [
+                      const SizedBox(height: 40),
+                      _loading
+                          ? const CircularProgressIndicator()
+                          : Text(
+                            _nama ?? '-',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                      const SizedBox(height: 4),
+                      _loading
+                          ? const SizedBox(height: 18)
+                          : Text(
+                            _nik ?? '-',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: Colors.black54,
+                            ),
+                          ),
                     ],
                   ),
                 ),
@@ -110,9 +165,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildSwitchTile(Icons.notifications, "Notifikasi"),
                     _buildTile(Icons.menu_book, "Panduan"),
                     _buildTile(Icons.settings, "Pengaturan"),
-                    _buildTile(Icons.logout, "Keluar", onTap: () {
-                      // Logout logic here
-                    }),
+                    _buildTile(Icons.logout, "Keluar", onTap: _logout),
                   ],
                 ),
               ),

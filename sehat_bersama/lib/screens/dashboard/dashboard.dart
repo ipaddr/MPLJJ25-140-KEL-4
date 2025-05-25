@@ -36,17 +36,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
-        final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        final userDoc =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .get();
         _userName = userDoc.data()?['name'] ?? 'Pengguna';
         _userStatus = userDoc.data()?['status'] ?? 'Aktif';
 
-        final appointmentQuery = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('appointments')
-            .orderBy('dateTime', descending: false)
-            .limit(1)
-            .get();
+        final appointmentQuery =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .collection('appointments')
+                .orderBy('dateTime', descending: false)
+                .limit(1)
+                .get();
 
         if (appointmentQuery.docs.isNotEmpty) {
           _appointmentData = appointmentQuery.docs.first.data();
@@ -54,13 +59,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _appointmentData = null;
         }
 
-        final medicationQuery = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('medications')
-            .orderBy('reminderTime')
-            .limit(1)
-            .get();
+        final medicationQuery =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .collection('medications')
+                .orderBy('reminderTime')
+                .limit(1)
+                .get();
 
         if (medicationQuery.docs.isNotEmpty) {
           _medicationData = medicationQuery.docs.first.data();
@@ -110,7 +116,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (appointmentTimestamp != null) {
       DateTime appointmentDateTime = appointmentTimestamp.toDate();
-      dateTimeStr = DateFormat('d MMMM yyyy, HH:mm', 'id_ID').format(appointmentDateTime) + " WIB";
+      dateTimeStr =
+          DateFormat(
+            'd MMMM yyyy, HH:mm',
+            'id_ID',
+          ).format(appointmentDateTime) +
+          " WIB";
     }
     return "$hospitalName\n$dateTimeStr";
   }
@@ -153,44 +164,59 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     'assets/images/logo.png',
                     height: 70,
                     errorBuilder: (context, error, stackTrace) {
-                      return const Icon(Icons.business, size: 70, color: Colors.grey);
+                      return const Icon(
+                        Icons.business,
+                        size: 70,
+                        color: Colors.grey,
+                      );
                     },
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _isLoading
-                        ? const Center(child: CircularProgressIndicator())
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    "Hi, ${_userName ?? '...'} ",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                    child:
+                        _isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      "Hi, ${_userName ?? '...'} ",
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
                                     ),
+                                    if (_userStatus == 'Aktif' ||
+                                        _userStatus == 'Terverifikasi')
+                                      const Icon(
+                                        Icons.verified,
+                                        color: Colors.green,
+                                        size: 18,
+                                      ),
+                                  ],
+                                ),
+                                Text(
+                                  "Status: ${_userStatus ?? '...'}",
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black54,
                                   ),
-                                  if (_userStatus == 'Aktif' || _userStatus == 'Terverifikasi')
-                                    const Icon(Icons.verified, color: Colors.green, size: 18),
-                                ],
-                              ),
-                              Text(
-                                "Status: ${_userStatus ?? '...'}",
-                                style: const TextStyle(fontSize: 12, color: Colors.black54),
-                              ),
-                            ],
-                          ),
+                                ),
+                              ],
+                            ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.notifications_none_outlined),
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Tombol Notifikasi diklik!')),
+                        const SnackBar(
+                          content: Text('Tombol Notifikasi diklik!'),
+                        ),
                       );
                     },
-                  )
+                  ),
                 ],
               ),
 
@@ -216,7 +242,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const RegistrasiOnlineScreen(),
+                              builder:
+                                  (context) => const RegistrasiOnlineScreen(),
                             ),
                           );
                         },
@@ -253,7 +280,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const LayananAntreanScreen(),
+                              builder:
+                                  (context) => const LayananAntreanScreen(),
                             ),
                           );
                         },
@@ -266,7 +294,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const MedicationReminderScreen(),
+                              builder:
+                                  (context) => const MedicationReminderScreen(),
                             ),
                           );
                         },
@@ -308,7 +337,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text("Jadwal Pemeriksaan Terdekat", style: TextStyle(color: Color(0xFF0D47A1), fontSize: 13)),
+                            const Text(
+                              "Jadwal Pemeriksaan Terdekat",
+                              style: TextStyle(
+                                color: Color(0xFF0D47A1),
+                                fontSize: 13,
+                              ),
+                            ),
                             const SizedBox(height: 4),
                             Text(
                               _formatAppointment(_appointmentData),
@@ -321,12 +356,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ],
                         ),
                       ),
-                      const Icon(Icons.calendar_month_outlined, size: 36, color: Color(0xFF07477C)),
+                      const Icon(
+                        Icons.calendar_month_outlined,
+                        size: 36,
+                        color: Color(0xFF07477C),
+                      ),
                     ],
                   ),
                 ),
 
-              if (!_isLoading && _appointmentData != null) const SizedBox(height: 16),
+              if (!_isLoading && _appointmentData != null)
+                const SizedBox(height: 16),
 
               // Info Obat
               if (!_isLoading && _medicationData != null)
@@ -353,25 +393,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           children: [
                             const Text(
                               "Minum obat anda hari ini!",
-                              style: TextStyle(color: Colors.white, fontSize: 13),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               _formatMedication(_medicationData),
                               style: const TextStyle(
-                                  fontWeight: FontWeight.bold, color: Colors.white, fontSize: 15),
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontSize: 15,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.medical_information_outlined, size: 36, color: Colors.white),
+                      const Icon(
+                        Icons.medical_information_outlined,
+                        size: 36,
+                        color: Colors.white,
+                      ),
                     ],
                   ),
                 ),
 
-              if (!_isLoading && _medicationData != null) const SizedBox(height: 16),
+              if (!_isLoading && _medicationData != null)
+                const SizedBox(height: 16),
 
-              if (!_isLoading && _appointmentData == null && _medicationData == null)
+              if (!_isLoading &&
+                  _appointmentData == null &&
+                  _medicationData == null)
                 const Center(
                   child: Padding(
                     padding: EdgeInsets.all(20.0),
@@ -400,9 +453,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

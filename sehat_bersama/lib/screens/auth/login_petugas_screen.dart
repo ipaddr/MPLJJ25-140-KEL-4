@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginPetugasScreen extends StatefulWidget {
   const LoginPetugasScreen({super.key});
@@ -11,6 +12,26 @@ class _LoginPetugasScreenState extends State<LoginPetugasScreen> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool _obscurePassword = true;
+  String? _errorText;
+
+  Future<void> _login() async {
+    final username = usernameController.text.trim();
+    final password = passwordController.text;
+
+    if (username == 'admin' && password == 'admin') {
+      // Simpan ke Firestore
+      await FirebaseFirestore.instance.collection('login_petugas').add({
+        'username': username,
+        'loginAt': FieldValue.serverTimestamp(),
+      });
+
+      Navigator.pushNamed(context, '/dashboard-petugas');
+    } else {
+      setState(() {
+        _errorText = "Username atau password salah!";
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,6 +130,15 @@ class _LoginPetugasScreenState extends State<LoginPetugasScreen> {
               ),
               const SizedBox(height: 8),
 
+              if (_errorText != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Text(
+                    _errorText!,
+                    style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                  ),
+                ),
+
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
@@ -128,9 +158,7 @@ class _LoginPetugasScreenState extends State<LoginPetugasScreen> {
                 child: SizedBox(
                   width: 200,
                   child: ElevatedButton(
-                    onPressed: () {
-                    Navigator.pushNamed(context, '/dashboard-petugas'); 
-                },
+                    onPressed: _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF4A9DEB),
                       padding: const EdgeInsets.symmetric(vertical: 14),
