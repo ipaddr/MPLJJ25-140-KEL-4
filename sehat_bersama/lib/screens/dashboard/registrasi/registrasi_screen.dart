@@ -34,9 +34,9 @@ class _RegistrasiOnlineScreenState extends State<RegistrasiOnlineScreen> {
       Navigator.pushNamed(context, '/registrasi-berhasil');
     } catch (e) {
       setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menyimpan data: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal menyimpan data: $e')));
     }
   }
 
@@ -85,7 +85,8 @@ class _RegistrasiOnlineScreenState extends State<RegistrasiOnlineScreen> {
                 phoneController,
                 keyboardType: TextInputType.phone,
                 validator: (val) {
-                  if (val == null || val.isEmpty) return "Nomor telepon wajib diisi";
+                  if (val == null || val.isEmpty)
+                    return "Nomor telepon wajib diisi";
                   if (!RegExp(r'^\d{10,15}$').hasMatch(val)) {
                     return "Nomor telepon tidak valid";
                   }
@@ -101,9 +102,15 @@ class _RegistrasiOnlineScreenState extends State<RegistrasiOnlineScreen> {
                   labelText: "Tanggal Pemeriksaan",
                   labelStyle: const TextStyle(color: Colors.black),
                   suffixIcon: const Icon(Icons.calendar_today),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                validator: (val) => val == null || val.isEmpty ? "Tanggal wajib diisi" : null,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty
+                            ? "Tanggal wajib diisi"
+                            : null,
                 onTap: () async {
                   final picked = await showDatePicker(
                     context: context,
@@ -122,13 +129,22 @@ class _RegistrasiOnlineScreenState extends State<RegistrasiOnlineScreen> {
                 value: selectedGender,
                 decoration: InputDecoration(
                   labelText: "Jenis Kelamin",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 items: const [
-                  DropdownMenuItem(value: "Laki-laki", child: Text("Laki-laki")),
-                  DropdownMenuItem(value: "Perempuan", child: Text("Perempuan")),
+                  DropdownMenuItem(
+                    value: "Laki-laki",
+                    child: Text("Laki-laki"),
+                  ),
+                  DropdownMenuItem(
+                    value: "Perempuan",
+                    child: Text("Perempuan"),
+                  ),
                 ],
-                validator: (val) => val == null ? "Jenis kelamin wajib dipilih" : null,
+                validator:
+                    (val) => val == null ? "Jenis kelamin wajib dipilih" : null,
                 onChanged: (value) {
                   setState(() {
                     selectedGender = value;
@@ -144,17 +160,23 @@ class _RegistrasiOnlineScreenState extends State<RegistrasiOnlineScreen> {
                     backgroundColor: const Color(0xFF07477C),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
-                  child: _loading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text("Daftar Sekarang"),
+                  child:
+                      _loading
+                          ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                          : const Text("Daftar Sekarang"),
                 ),
-              )
+              ),
             ],
           ),
         ),

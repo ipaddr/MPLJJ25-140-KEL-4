@@ -34,6 +34,10 @@ import 'screens/petugas/kelola_jadwal/kelola_jadwal_screen.dart'
 import 'screens/petugas/kelola_jadwal/jadwal_list_screen.dart';
 import 'screens/petugas/hasil_pemeriksaan/input_hasil_screen.dart';
 import 'screens/petugas/kelola_obat/kelola_obat_screen.dart';
+import 'screens/dashboard/akun/keamanan_privasi_screen.dart';
+import 'screens/dashboard/akun/panduan_aplikasi_screen.dart';
+import 'screens/dashboard/akun/pengaturan_screen.dart';
+import 'screens/dashboard/akun/ubah_kata_sandi_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -90,6 +94,10 @@ class SehatBersamaApp extends StatelessWidget {
         '/input-hasil': (_) => const InputHasilPemeriksaanScreen(),
         '/berita': (_) => const BeritaListScreen(),
         '/kelola-obat': (_) => const KelolaJadwalObatScreen(),
+        '/ubah-kata-sandi': (_) => const UbahKataSandiScreen(),
+        '/keamanan-privasi': (_) => const KeamananPrivasiScreen(),
+        '/panduan-aplikasi': (_) => const PanduanAplikasiScreen(),
+        '/pengaturan': (_) => const PengaturanScreen(),
       },
       onGenerateRoute: (settings) {
         // Handle route dengan arguments

@@ -114,6 +114,22 @@ class _MedicationReminderScreenState extends State<MedicationReminderScreen> {
     });
   }
 
+  Future<void> _hapusPengingatObat(Medication medication) async {
+    // Cari dokumen berdasarkan field unik (pasien, obat, jam)
+    final snapshot =
+        await FirebaseFirestore.instance
+            .collection('jadwal_obat')
+            .where('pasien', isEqualTo: medication.patientName)
+            .where('obat', isEqualTo: medication.name)
+            .where('jam', isEqualTo: _formatTimeOfDay(medication.time))
+            .get();
+
+    for (var doc in snapshot.docs) {
+      await doc.reference.delete();
+    }
+    await _fetchMedications();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_isLocaleInitialized || _isLoading) {
@@ -291,6 +307,38 @@ class _MedicationReminderScreenState extends State<MedicationReminderScreen> {
                 setState(() {
                   medication.isCompleted = !medication.isCompleted;
                 });
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              tooltip: 'Hapus',
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder:
+                      (ctx) => AlertDialog(
+                        title: const Text('Konfirmasi'),
+                        content: const Text('Hapus pengingat obat ini?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Batal'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Hapus'),
+                          ),
+                        ],
+                      ),
+                );
+                if (confirm == true) {
+                  await _hapusPengingatObat(medication);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Pengingat obat dihapus')),
+                    );
+                  }
+                }
               },
             ),
           ],

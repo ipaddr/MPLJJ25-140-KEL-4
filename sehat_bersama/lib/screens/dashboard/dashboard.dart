@@ -19,13 +19,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _userStatus;
   bool _isLoading = true;
 
-  Map<String, dynamic>? _appointmentData;
-  Map<String, dynamic>? _medicationData;
+  Map<String, dynamic>? _jadwalHariIni;
+  List<String> _listNamaPasien = [];
 
   @override
   void initState() {
     super.initState();
+    // Reset state agar data lama tidak tertinggal saat user berbeda login
+    _userName = null;
+    _userStatus = null;
+    _jadwalHariIni = null;
+    _listNamaPasien = [];
+    _isLoading = true;
     _fetchDashboardData();
+    _fetchNamaPasien();
   }
 
   Future<void> _fetchDashboardData() async {
@@ -36,59 +43,73 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
+        // Ambil nama dari koleksi users berdasarkan UID user login
         final userDoc =
             await FirebaseFirestore.instance
                 .collection('users')
                 .doc(user.uid)
                 .get();
+
         _userName = userDoc.data()?['name'] ?? 'Pengguna';
         _userStatus = userDoc.data()?['status'] ?? 'Aktif';
 
-        final appointmentQuery =
+        final today = DateTime.now();
+        final todayStr = DateFormat('dd-MM-yyyy').format(today);
+
+        // Ambil jadwal pemeriksaan hari ini dari koleksi penjadwalan
+        final jadwalSnapshot =
             await FirebaseFirestore.instance
-                .collection('users')
-                .doc(user.uid)
-                .collection('appointments')
-                .orderBy('dateTime', descending: false)
-                .limit(1)
+                .collection('penjadwalan')
+                .where('tanggal', isEqualTo: todayStr)
                 .get();
 
-        if (appointmentQuery.docs.isNotEmpty) {
-          _appointmentData = appointmentQuery.docs.first.data();
-        } else {
-          _appointmentData = null;
+        Map<String, dynamic>? jadwalHariIni;
+        for (var doc in jadwalSnapshot.docs) {
+          final data = doc.data();
+          if (data['pasien'] == null || data['pasien'] == _userName) {
+            jadwalHariIni = data;
+            break;
+          }
         }
-
-        final medicationQuery =
-            await FirebaseFirestore.instance
-                .collection('users')
-                .doc(user.uid)
-                .collection('medications')
-                .orderBy('reminderTime')
-                .limit(1)
-                .get();
-
-        if (medicationQuery.docs.isNotEmpty) {
-          _medicationData = medicationQuery.docs.first.data();
-        } else {
-          _medicationData = null;
-        }
+        jadwalHariIni ??=
+            jadwalSnapshot.docs.isNotEmpty
+                ? jadwalSnapshot.docs.first.data()
+                : null;
+        _jadwalHariIni = jadwalHariIni;
       } catch (e) {
         _userName = 'Pengguna';
         _userStatus = 'Gagal memuat';
-        _appointmentData = null;
-        _medicationData = null;
+        _jadwalHariIni = null;
       }
     } else {
       _userName = 'Pengguna';
       _userStatus = 'Tidak Login';
-      _appointmentData = null;
-      _medicationData = null;
+      _jadwalHariIni = null;
     }
 
     setState(() {
       _isLoading = false;
     });
+  }
+
+  Future<void> _fetchNamaPasien() async {
+    try {
+      final regSnapshot =
+          await FirebaseFirestore.instance
+              .collection('registrasi_online')
+              .get();
+      setState(() {
+        _listNamaPasien =
+            regSnapshot.docs
+                .map((doc) => doc.data()['nama']?.toString() ?? '')
+                .where((nama) => nama.isNotEmpty)
+                .toList();
+      });
+    } catch (e) {
+      setState(() {
+        _listNamaPasien = [];
+      });
+    }
   }
 
   void _onItemTapped(int index) {
@@ -108,29 +129,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  String _formatAppointment(Map<String, dynamic>? data) {
-    if (data == null) return "Tidak ada jadwal";
-    String hospitalName = data['hospitalName'] ?? 'Nama Rumah Sakit Tidak Ada';
-    Timestamp? appointmentTimestamp = data['dateTime'] as Timestamp?;
-    String dateTimeStr = "Tanggal tidak tersedia";
-
-    if (appointmentTimestamp != null) {
-      DateTime appointmentDateTime = appointmentTimestamp.toDate();
-      dateTimeStr =
-          DateFormat(
-            'd MMMM yyyy, HH:mm',
-            'id_ID',
-          ).format(appointmentDateTime) +
-          " WIB";
-    }
-    return "$hospitalName\n$dateTimeStr";
-  }
-
-  String _formatMedication(Map<String, dynamic>? data) {
-    if (data == null) return "Tidak ada pengingat obat";
-    String medicationName = data['medicationName'] ?? 'Nama Obat Tidak Ada';
-    String medicationTimeStr = data['medicationTime'] ?? 'Waktu tidak tersedia';
-    return "$medicationName - $medicationTimeStr";
+  String _formatJadwal(Map<String, dynamic>? data) {
+    if (data == null) return "Tidak ada jadwal pemeriksaan hari ini";
+    final poli = data['poli'] ?? '-';
+    final jam =
+        (data['start'] != null && data['end'] != null)
+            ? "${data['start']} - ${data['end']}"
+            : '-';
+    final catatan = data['catatan'] ?? '';
+    return "Poli: $poli\nJam: $jam${catatan.isNotEmpty ? '\nCatatan: $catatan' : ''}";
   }
 
   @override
@@ -264,7 +271,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           if (_userName != null && _userName!.isNotEmpty) {
                             Navigator.pushNamed(
                               context,
-                              '/hasil-pemeriksaan', // Pastikan route ini sesuai dengan main.dart
+                              '/hasil-pemeriksaan',
                               arguments: {'namaPasien': _userName},
                             );
                           } else {
@@ -319,134 +326,145 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               const SizedBox(height: 24),
 
-              // Info Pemeriksaan
-              if (_isLoading)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 20.0),
-                    child: CircularProgressIndicator(),
-                  ),
-                )
-              else if (_appointmentData != null)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE3F2FD),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.2),
-                        spreadRadius: 1,
-                        blurRadius: 3,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Jadwal Pemeriksaan Terdekat",
-                              style: TextStyle(
-                                color: Color(0xFF0D47A1),
-                                fontSize: 13,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _formatAppointment(_appointmentData),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF0D47A1),
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(
-                        Icons.calendar_month_outlined,
-                        size: 36,
-                        color: Color(0xFF07477C),
-                      ),
-                    ],
-                  ),
-                ),
-
-              if (!_isLoading && _appointmentData != null)
-                const SizedBox(height: 16),
-
-              // Info Obat
-              if (!_isLoading && _medicationData != null)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF07477C),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.blueGrey.withOpacity(0.3),
-                        spreadRadius: 1,
-                        blurRadius: 3,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Minum obat anda hari ini!",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _formatMedication(_medicationData),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(
-                        Icons.medical_information_outlined,
-                        size: 36,
-                        color: Colors.white,
-                      ),
-                    ],
-                  ),
-                ),
-
-              if (!_isLoading && _medicationData != null)
-                const SizedBox(height: 16),
-
-              if (!_isLoading &&
-                  _appointmentData == null &&
-                  _medicationData == null)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(20.0),
-                    child: Text(
-                      "Tidak ada jadwal pemeriksaan atau pengingat obat saat ini.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey, fontSize: 14),
+              // Info Pemeriksaan Hari Ini
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE3F2FD),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 3,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
+                  ],
                 ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Jadwal Pemeriksaan Hari Ini",
+                            style: TextStyle(
+                              color: Color(0xFF0D47A1),
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          _isLoading
+                              ? const CircularProgressIndicator()
+                              : Text(
+                                _formatJadwal(_jadwalHariIni),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0D47A1),
+                                  fontSize: 15,
+                                ),
+                              ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.calendar_month_outlined,
+                      size: 36,
+                      color: Color(0xFF07477C),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Daftar Pasien Terdaftar dengan icon user besar di kanan
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF07477C),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blueGrey.withOpacity(0.3),
+                      spreadRadius: 1,
+                      blurRadius: 3,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Pasien Terdaftar",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _isLoading
+                              ? const Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
+                              )
+                              : _listNamaPasien.isEmpty
+                              ? const Text(
+                                "Belum ada pasien terdaftar.",
+                                style: TextStyle(color: Colors.white),
+                              )
+                              : ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: _listNamaPasien.length,
+                                itemBuilder:
+                                    (context, idx) => Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 2.5,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.person,
+                                            color: Colors.white,
+                                            size: 18,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            _listNamaPasien[idx],
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                              ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    const Icon(
+                      Icons.supervised_user_circle_rounded,
+                      color: Colors.white,
+                      size: 48,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
             ],
           ),
         ),
