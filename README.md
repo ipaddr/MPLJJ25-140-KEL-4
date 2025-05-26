@@ -44,8 +44,8 @@
   <li>Flutter (Frontend)</li>
   <li>Node.js (Backend)</li>
   <li>Firebase (Authentication, Firestore, Storage)</li>
-  <li>Google Maps API</li>
-  <li>WhatsApp/SMS Gateway API</li>
+  <li>Google Gemini API</li>
+  <li>NEWS API</li>
 </ul>
 
 ---
