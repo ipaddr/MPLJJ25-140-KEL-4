@@ -261,7 +261,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         "Hasil Pemeriksaan",
                         Icons.monitor_heart_outlined,
                         onTap: () {
-                          Navigator.pushNamed(context, '/hasil');
+                          if (_userName != null && _userName!.isNotEmpty) {
+                            Navigator.pushNamed(
+                              context,
+                              '/hasil-pemeriksaan', // Pastikan route ini sesuai dengan main.dart
+                              arguments: {'namaPasien': _userName},
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Nama pasien tidak ditemukan!'),
+                              ),
+                            );
+                          }
                         },
                       ),
                       _buildMenuItem(

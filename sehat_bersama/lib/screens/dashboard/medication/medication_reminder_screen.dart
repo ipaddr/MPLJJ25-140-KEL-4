@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +30,7 @@ class MedicationApp extends StatelessWidget {
 }
 
 class Medication {
+  final String patientName;
   final String name;
   final String dosage;
   final String instructions;
@@ -38,6 +40,7 @@ class Medication {
   bool isCompleted;
 
   Medication({
+    required this.patientName,
     required this.name,
     required this.dosage,
     required this.instructions,
@@ -46,6 +49,23 @@ class Medication {
     required this.schedule,
     this.isCompleted = false,
   });
+
+  factory Medication.fromFirestore(Map<String, dynamic> data) {
+    final timeStr = (data['jam'] ?? '08:00').toString();
+    final timeParts = timeStr.split(':');
+    return Medication(
+      patientName: data['pasien'] ?? '-',
+      name: data['obat'] ?? '-',
+      dosage: data['durasi'] ?? '-',
+      instructions: data['waktuMinum'] ?? '-',
+      medicationType: data['jenisObat'] ?? '-',
+      time: TimeOfDay(
+        hour: int.tryParse(timeParts[0]) ?? 8,
+        minute: int.tryParse(timeParts.length > 1 ? timeParts[1] : '0') ?? 0,
+      ),
+      schedule: data['frekuensi'] ?? '-',
+    );
+  }
 }
 
 class MedicationReminderScreen extends StatefulWidget {
@@ -57,36 +77,8 @@ class MedicationReminderScreen extends StatefulWidget {
 }
 
 class _MedicationReminderScreenState extends State<MedicationReminderScreen> {
-  final List<Medication> _medications = [
-    Medication(
-      name: 'Acetaminophen',
-      dosage: '1 tablet',
-      instructions: 'Sebelum Makan',
-      medicationType: 'Pill',
-      time: const TimeOfDay(hour: 8, minute: 0),
-      schedule: 'Setiap Hari',
-      isCompleted: true,
-    ),
-    Medication(
-      name: 'Paracetamol',
-      dosage: '1 tablet',
-      instructions: 'Sebelum Makan',
-      medicationType: 'Pill',
-      time: const TimeOfDay(hour: 8, minute: 30),
-      schedule: 'Setiap Hari',
-      isCompleted: true,
-    ),
-    Medication(
-      name: 'Rhinocs SG',
-      dosage: '1 tablet',
-      instructions: 'Sebelum Makan',
-      medicationType: 'Pill',
-      time: const TimeOfDay(hour: 16, minute: 30),
-      schedule: 'Setiap Hari',
-      isCompleted: false,
-    ),
-  ];
-
+  List<Medication> _medications = [];
+  bool _isLoading = true;
   DateTime _selectedDate = DateTime.now();
   bool _isLocaleInitialized = false;
 
@@ -94,6 +86,7 @@ class _MedicationReminderScreenState extends State<MedicationReminderScreen> {
   void initState() {
     super.initState();
     _initializeLocale();
+    _fetchMedications();
   }
 
   Future<void> _initializeLocale() async {
@@ -105,9 +98,25 @@ class _MedicationReminderScreenState extends State<MedicationReminderScreen> {
     }
   }
 
+  Future<void> _fetchMedications() async {
+    final snapshot =
+        await FirebaseFirestore.instance
+            .collection('jadwal_obat')
+            .orderBy('createdAt', descending: true)
+            .get();
+
+    setState(() {
+      _medications =
+          snapshot.docs
+              .map((doc) => Medication.fromFirestore(doc.data()))
+              .toList();
+      _isLoading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (!_isLocaleInitialized) {
+    if (!_isLocaleInitialized || _isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -141,8 +150,13 @@ class _MedicationReminderScreenState extends State<MedicationReminderScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _navigateToAddMedication(context);
+        onPressed: () async {
+          final result = await Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const AddMedicationFlow()),
+          );
+          if (result == true) {
+            _fetchMedications();
+          }
         },
         backgroundColor: const Color(0xFF07477C),
         child: const Icon(Icons.add),
@@ -152,9 +166,16 @@ class _MedicationReminderScreenState extends State<MedicationReminderScreen> {
         unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
         currentIndex: 0,
-        onTap: (index) {
+        onTap: (index) async {
           if (index == 1) {
-            _navigateToAddMedication(context);
+            final result = await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const AddMedicationFlow(),
+              ),
+            );
+            if (result == true) {
+              _fetchMedications();
+            }
           }
         },
         items: const [
@@ -213,6 +234,15 @@ class _MedicationReminderScreenState extends State<MedicationReminderScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
+                    medication.patientName,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF07477C),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
                     _formatTimeOfDay(medication.time),
                     style: const TextStyle(
                       fontSize: 18,
@@ -242,6 +272,10 @@ class _MedicationReminderScreenState extends State<MedicationReminderScreen> {
                     '${medication.dosage} · ${medication.instructions}',
                     style: const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
+                  Text(
+                    medication.schedule,
+                    style: const TextStyle(fontSize: 13, color: Colors.black54),
+                  ),
                 ],
               ),
             ),
@@ -263,18 +297,6 @@ class _MedicationReminderScreenState extends State<MedicationReminderScreen> {
         ),
       ),
     );
-  }
-
-  Future<void> _navigateToAddMedication(BuildContext context) async {
-    final result = await Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => const AddMedicationFlow()));
-
-    if (result != null && result is Medication) {
-      setState(() {
-        _medications.add(result);
-      });
-    }
   }
 
   String _getFormattedDate() {
@@ -304,391 +326,265 @@ class AddMedicationFlow extends StatefulWidget {
 }
 
 class _AddMedicationFlowState extends State<AddMedicationFlow> {
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _obatController = TextEditingController();
+  final TextEditingController _durasiController = TextEditingController();
+  final TextEditingController _jamController = TextEditingController();
+  final TextEditingController _frekuensiController = TextEditingController();
 
-  // Medication data
-  String _medicationName = '';
-  String _medicationType = '';
-  String _schedule = '';
-  int _hours = 8;
-  int _minutes = 0;
-  int _seconds = 0;
+  String? _selectedPasien;
+  List<String> _listPasien = [];
+  bool _loadingPasien = true;
+
+  String? _jenisObat;
+  String _waktuMinum = "Sebelum Makan";
+  TimeOfDay _selectedTime = const TimeOfDay(hour: 8, minute: 0);
+
+  final List<String> jenisObatList = ["Tablet", "Kapsul", "Sendok"];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPasien();
+  }
+
+  Future<void> _fetchPasien() async {
+    final snapshot =
+        await FirebaseFirestore.instance.collection('registrasi_online').get();
+    setState(() {
+      _listPasien =
+          snapshot.docs
+              .map((doc) => doc.data()['nama']?.toString() ?? '')
+              .where((nama) => nama.isNotEmpty)
+              .toList();
+      _loadingPasien = false;
+    });
+  }
+
+  Future<void> _simpanKeFirestore(Map<String, dynamic> data) async {
+    await FirebaseFirestore.instance.collection('jadwal_obat').add(data);
+  }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _obatController.dispose();
+    _durasiController.dispose();
+    _jamController.dispose();
+    _frekuensiController.dispose();
     super.dispose();
-  }
-
-  void _nextPage() {
-    _pageController.nextPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-    setState(() {
-      _currentPage++;
-    });
-  }
-
-  void _previousPage() {
-    _pageController.previousPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-    setState(() {
-      _currentPage--;
-    });
-  }
-
-  void _finishFlow() {
-    final newMedication = Medication(
-      name: _medicationName,
-      dosage:
-          '1 tablet', // Default value, could be customized in a future screen
-      instructions: 'Sebelum Makan', // Default value, could be customized
-      medicationType: _medicationType,
-      time: TimeOfDay(hour: _hours, minute: _minutes),
-      schedule: _schedule,
-    );
-
-    Navigator.of(context).pop(newMedication);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Image.asset(
-              'assets/images/logo.png',
-              height: 24,
-              errorBuilder:
-                  (context, error, stackTrace) =>
-                      const Icon(Icons.medication, color: Color(0xFF07477C)),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'Pengingat Obat',
-              style: TextStyle(
-                color: Color(0xFF07477C),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
+        title: const Text('Tambah Pengingat Obat'),
         backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF07477C),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF07477C)),
-          onPressed: () {
-            if (_currentPage > 0) {
-              _previousPage();
-            } else {
-              Navigator.of(context).pop();
-            }
-          },
-        ),
       ),
-      body: PageView(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(),
-        children: [
-          // Page 1: Add Medication Name
-          _buildAddMedicationNamePage(),
-
-          // Page 2: Select Medication Type
-          _buildSelectMedicationTypePage(),
-
-          // Page 3: Select Schedule
-          _buildSelectSchedulePage(),
-
-          // Page 4: Select Time
-          _buildSelectTimePage(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAddMedicationNamePage() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Obat apa yang ingin anda tambah?',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: TextField(
-              style: const TextStyle(color: Colors.black),
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                hintText: 'Nama obat',
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _medicationName = value;
-                });
-              },
-            ),
-          ),
-          const Spacer(),
-          Center(
-            child: ElevatedButton(
-              onPressed: _medicationName.isNotEmpty ? _nextPage : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF07477C),
-                minimumSize: const Size(120, 40),
-              ),
-              child: const Text('Next'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSelectMedicationTypePage() {
-    final medicationTypes = [
-      'Pill',
-      'Solution',
-      'Injection',
-      'Powder',
-      'Drops',
-      'Inhaler',
-      'Other',
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Jenis obat yang ingin ditambah?',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: ListView.builder(
-              itemCount: medicationTypes.length,
-              itemBuilder: (context, index) {
-                final type = medicationTypes[index];
-                return RadioListTile<String>(
-                  title: Text(type),
-                  value: type,
-                  groupValue: _medicationType,
-                  activeColor: const Color(0xFF07477C),
-                  onChanged: (value) {
-                    setState(() {
-                      _medicationType = value!;
-                    });
-                  },
-                );
-              },
-            ),
-          ),
-          Center(
-            child: ElevatedButton(
-              onPressed: _medicationType.isNotEmpty ? _nextPage : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF07477C),
-                minimumSize: const Size(120, 40),
-              ),
-              child: const Text('Next'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSelectSchedulePage() {
-    final scheduleOptions = [
-      'Setiap Hari',
-      'Sekali Seminggu',
-      'Dua Kali Seminggu',
-      'Tiga Kali Seminggu',
-      'Empat Kali Seminggu',
-      'Sekali Sebulan',
-      'Other',
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Jadwal konsumsi obat',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: ListView.builder(
-              itemCount: scheduleOptions.length,
-              itemBuilder: (context, index) {
-                final option = scheduleOptions[index];
-                return RadioListTile<String>(
-                  title: Text(option),
-                  value: option,
-                  groupValue: _schedule,
-                  activeColor: const Color(0xFF07477C),
-                  onChanged: (value) {
-                    setState(() {
-                      _schedule = value!;
-                    });
-                  },
-                );
-              },
-            ),
-          ),
-          Center(
-            child: ElevatedButton(
-              onPressed: _schedule.isNotEmpty ? _nextPage : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF07477C),
-                minimumSize: const Size(120, 40),
-              ),
-              child: const Text('Next'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSelectTimePage() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Jadwal konsumsi obat',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 30),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildTimeColumn(
-                'Hours',
-                _hours,
-                (newValue) {
-                  setState(() {
-                    _hours = newValue;
-                  });
-                },
-                0,
-                23,
-              ),
-              const Text(
-                ' : ',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              _buildTimeColumn(
-                'Minutes',
-                _minutes,
-                (newValue) {
-                  setState(() {
-                    _minutes = newValue;
-                  });
-                },
-                0,
-                59,
-              ),
-              const Text(
-                ' : ',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              _buildTimeColumn(
-                'Seconds',
-                _seconds,
-                (newValue) {
-                  setState(() {
-                    _seconds = newValue;
-                  });
-                },
-                0,
-                59,
-              ),
-            ],
-          ),
-          const Spacer(),
-          Center(
-            child: ElevatedButton(
-              onPressed: _finishFlow,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF07477C),
-                minimumSize: const Size(120, 40),
-              ),
-              child: const Text('Save'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTimeColumn(
-    String label,
-    int value,
-    Function(int) onChanged,
-    int min,
-    int max,
-  ) {
-    return Column(
-      children: [
-        Text(label, style: const TextStyle(fontSize: 14)),
-        const SizedBox(height: 10),
-        SizedBox(
-          width: 60,
-          child: Column(
-            children: [
-              _buildTimeControl(() {
-                onChanged((value + 1) % (max + 1));
-              }, Icons.arrow_drop_up),
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                alignment: Alignment.center,
-                child: Text(
-                  value.toString().padLeft(2, '0'),
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+      body:
+          _loadingPasien
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      DropdownButtonFormField<String>(
+                        value: _selectedPasien,
+                        decoration: _inputDecoration("Nama Pasien"),
+                        items:
+                            _listPasien
+                                .map(
+                                  (nama) => DropdownMenuItem(
+                                    value: nama,
+                                    child: Text(nama),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: (val) {
+                          setState(() {
+                            _selectedPasien = val;
+                          });
+                        },
+                        validator:
+                            (val) =>
+                                val == null || val.isEmpty
+                                    ? "Wajib dipilih"
+                                    : null,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _obatController,
+                        style: const TextStyle(
+                          color: Color.fromARGB(255, 0, 0, 0),
+                        ),
+                        decoration: _inputDecoration("Nama Obat"),
+                        validator:
+                            (val) =>
+                                val == null || val.isEmpty
+                                    ? "Wajib diisi"
+                                    : null,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _durasiController,
+                        style: const TextStyle(
+                          color: Color.fromARGB(255, 0, 0, 0),
+                        ),
+                        decoration: _inputDecoration("Durasi (mis. 14 Hari)"),
+                        validator:
+                            (val) =>
+                                val == null || val.isEmpty
+                                    ? "Wajib diisi"
+                                    : null,
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: _jenisObat,
+                        decoration: _inputDecoration("Jenis Takaran Obat"),
+                        items:
+                            jenisObatList
+                                .map(
+                                  (item) => DropdownMenuItem(
+                                    value: item,
+                                    child: Text(item),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: (val) {
+                          setState(() {
+                            _jenisObat = val;
+                          });
+                        },
+                        validator:
+                            (val) =>
+                                val == null || val.isEmpty
+                                    ? "Wajib dipilih"
+                                    : null,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _frekuensiController,
+                        style: const TextStyle(
+                          color: Color.fromARGB(255, 0, 0, 0),
+                        ),
+                        decoration: _inputDecoration(
+                          "Frekuensi (berapa kali sehari)",
+                        ),
+                        keyboardType: TextInputType.number,
+                        validator:
+                            (val) =>
+                                val == null || val.isEmpty
+                                    ? "Wajib diisi"
+                                    : null,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "Waktu Minum",
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      ListTile(
+                        title: const Text("Sebelum Makan"),
+                        leading: Radio<String>(
+                          value: "Sebelum Makan",
+                          groupValue: _waktuMinum,
+                          onChanged: (value) {
+                            setState(() {
+                              _waktuMinum = value!;
+                            });
+                          },
+                        ),
+                      ),
+                      ListTile(
+                        title: const Text("Sesudah Makan"),
+                        leading: Radio<String>(
+                          value: "Sesudah Makan",
+                          groupValue: _waktuMinum,
+                          onChanged: (value) {
+                            setState(() {
+                              _waktuMinum = value!;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "Jam Minum",
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      ListTile(
+                        title: Text(_selectedTime.format(context)),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.access_time),
+                          onPressed: () async {
+                            final picked = await showTimePicker(
+                              context: context,
+                              initialTime: _selectedTime,
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                _selectedTime = picked;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            if (_formKey.currentState!.validate() &&
+                                _jenisObat != null) {
+                              final data = {
+                                "pasien": _selectedPasien,
+                                "obat": _obatController.text,
+                                "durasi": _durasiController.text,
+                                "jenisObat": _jenisObat,
+                                "frekuensi": _frekuensiController.text,
+                                "waktuMinum": _waktuMinum,
+                                "jam":
+                                    "${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}",
+                                "createdAt": FieldValue.serverTimestamp(),
+                              };
+                              await _simpanKeFirestore(data);
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Jadwal obat berhasil disimpan!",
+                                    ),
+                                  ),
+                                );
+                                Navigator.pop(context, true);
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF07477C),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          child: const Text("Simpan"),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              _buildTimeControl(() {
-                onChanged((value - 1 + max + 1) % (max + 1));
-              }, Icons.arrow_drop_down),
-            ],
-          ),
-        ),
-      ],
     );
   }
 
-  Widget _buildTimeControl(VoidCallback onPressed, IconData icon) {
-    return InkWell(
-      onTap: onPressed,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, size: 30),
-      ),
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      filled: true,
+      fillColor: Colors.grey[100],
     );
   }
 }

@@ -23,7 +23,6 @@ import 'screens/dashboard/antrean/layanan_antrean_screen.dart';
 import 'screens/dashboard/antrean/cetak_antrean_screen.dart';
 import 'screens/dashboard/antrean/checkin_antrean_berhasil_screen.dart';
 import 'screens/dashboard/penjadwalan/penjadwalan_screen.dart';
-import 'screens/dashboard/penjadwalan/jadwal_sukses_screen.dart';
 import 'screens/dashboard/hasil_pemeriksaan/hasil_pemeriksaan.dart';
 import 'screens/dashboard/screening/screening_tbc_screen.dart';
 import 'screens/dashboard/akun/profile_screen.dart';
@@ -80,11 +79,10 @@ class SehatBersamaApp extends StatelessWidget {
         '/registrasi-berhasil': (_) => const RegistrasiBerhasilScreen(),
         '/layanan-antrean': (_) => const LayananAntreanScreen(),
         '/cetak-antrean': (_) => const CetakAntreanScreen(),
-        '/checkin-berhasil': (_) => const checkin_antrean_berhasil_screen(),
+        '/checkin-berhasil': (_) => const CheckinAntreanBerhasilScreen(),
         '/penjadwalan': (_) => const PenjadwalanScreen(),
-        // Hapus '/jadwal-sukses' dari routes karena butuh parameter!
         '/dashboard-petugas': (_) => const DashboardPetugasScreen(),
-        '/hasil': (_) => const HasilPemeriksaanScreen(),
+        '/hasil-pemeriksaan': (_) => const HasilPemeriksaanScreen(),
         '/screening': (_) => const ScreeningTBCScreen(),
         '/profile': (_) => const ProfileScreen(),
         '/chatbot': (_) => const ChatbotScreen(),
@@ -94,19 +92,39 @@ class SehatBersamaApp extends StatelessWidget {
         '/kelola-obat': (_) => const KelolaJadwalObatScreen(),
       },
       onGenerateRoute: (settings) {
-        if (settings.name == '/list-jadwal') {
-          return MaterialPageRoute(
-            builder: (context) => const JadwalListScreen(),
-          );
+        // Handle route dengan arguments
+        switch (settings.name) {
+          case '/hasil-pemeriksaan':
+            return MaterialPageRoute(
+              builder: (context) => const HasilPemeriksaanScreen(),
+              settings: settings, // Penting! Pass settings untuk arguments
+            );
+
+          case '/list-jadwal':
+            return MaterialPageRoute(
+              builder: (context) => const JadwalListScreen(),
+              settings: settings,
+            );
+
+          case '/berita-detail':
+            final args = settings.arguments as Map<String, dynamic>?;
+            if (args != null && args.containsKey('article')) {
+              return MaterialPageRoute(
+                builder: (_) => BeritaDetailScreen(article: args['article']),
+                settings: settings,
+              );
+            }
+            // Fallback jika arguments tidak valid
+            return MaterialPageRoute(
+              builder: (context) => const BeritaListScreen(),
+            );
+
+          default:
+            // Default fallback untuk route yang tidak dikenal
+            return MaterialPageRoute(
+              builder: (context) => const SplashScreen(),
+            );
         }
-        if (settings.name == '/berita-detail') {
-          final args = settings.arguments as Map<String, dynamic>;
-          return MaterialPageRoute(
-            builder: (_) => BeritaDetailScreen(article: args['article']),
-          );
-        }
-        // Default fallback
-        return MaterialPageRoute(builder: (context) => const SplashScreen());
       },
     );
   }

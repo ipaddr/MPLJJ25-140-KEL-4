@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class KelolaJadwalObatScreen extends StatefulWidget {
   const KelolaJadwalObatScreen({super.key});
 
   @override
-  State<KelolaJadwalObatScreen> createState() =>
-      _KelolaJadwalObatScreenState();
+  State<KelolaJadwalObatScreen> createState() => _KelolaJadwalObatScreenState();
 }
 
 class _KelolaJadwalObatScreenState extends State<KelolaJadwalObatScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _pasienController = TextEditingController();
   final TextEditingController _tanggalController = TextEditingController();
   final TextEditingController _durasiController = TextEditingController();
   final TextEditingController _obatController = TextEditingController();
   final TextEditingController _frekuensiController = TextEditingController();
+
+  String? _selectedPasien;
+  List<String> _listPasien = [];
+  bool _loadingPasien = true;
 
   String? _jenisObat;
   String _waktuMinum = "Sebelum Makan";
@@ -24,13 +27,35 @@ class _KelolaJadwalObatScreenState extends State<KelolaJadwalObatScreen> {
   final List<String> jenisObatList = ["Tablet", "Kapsul", "Sendok"];
 
   @override
+  void initState() {
+    super.initState();
+    _fetchPasien();
+  }
+
+  Future<void> _fetchPasien() async {
+    final snapshot =
+        await FirebaseFirestore.instance.collection('registrasi_online').get();
+    setState(() {
+      _listPasien =
+          snapshot.docs
+              .map((doc) => doc.data()['nama']?.toString() ?? '')
+              .where((nama) => nama.isNotEmpty)
+              .toList();
+      _loadingPasien = false;
+    });
+  }
+
+  @override
   void dispose() {
-    _pasienController.dispose();
     _tanggalController.dispose();
     _durasiController.dispose();
     _obatController.dispose();
     _frekuensiController.dispose();
     super.dispose();
+  }
+
+  Future<void> _simpanKeFirestore(Map<String, dynamic> data) async {
+    await FirebaseFirestore.instance.collection('jadwal_obat').add(data);
   }
 
   @override
@@ -48,7 +73,33 @@ class _KelolaJadwalObatScreenState extends State<KelolaJadwalObatScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTextField("Nama Pasien", _pasienController),
+              _loadingPasien
+                  ? const Center(child: CircularProgressIndicator())
+                  : DropdownButtonFormField<String>(
+                    value: _selectedPasien,
+                    decoration: _inputDecoration("Nama Pasien"),
+                    items:
+                        _listPasien
+                            .map(
+                              (nama) => DropdownMenuItem(
+                                value: nama,
+                                child: Text(
+                                  nama,
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                    dropdownColor: const Color(0xFF032B45),
+                    onChanged: (val) {
+                      setState(() {
+                        _selectedPasien = val;
+                      });
+                    },
+                    validator:
+                        (val) =>
+                            val == null || val.isEmpty ? "Wajib dipilih" : null,
+                  ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _tanggalController,
@@ -61,35 +112,51 @@ class _KelolaJadwalObatScreenState extends State<KelolaJadwalObatScreen> {
                     lastDate: DateTime(2100),
                   );
                   if (picked != null) {
-                    _tanggalController.text =
-                        DateFormat('dd MMMM yyyy', 'id_ID').format(picked);
+                    _tanggalController.text = DateFormat(
+                      'dd MMMM yyyy',
+                      'id_ID',
+                    ).format(picked);
                   }
                 },
                 decoration: _inputDecoration("Tanggal Mulai"),
                 style: const TextStyle(color: Colors.white),
-                validator: (val) => val == null || val.isEmpty
-                    ? "Tanggal wajib diisi"
-                    : null,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty
+                            ? "Tanggal wajib diisi"
+                            : null,
               ),
               const SizedBox(height: 16),
               _buildTextField("Durasi (mis. 14 Hari)", _durasiController),
               const SizedBox(height: 16),
-              _buildTextField("Nama Obat (mis. Acetaminophen)", _obatController),
+              _buildTextField(
+                "Nama Obat (mis. Acetaminophen)",
+                _obatController,
+              ),
               const SizedBox(height: 16),
-              _buildDropdownField("Jenis Takaran Obat", jenisObatList, _jenisObat,
-                  (val) {
-                setState(() {
-                  _jenisObat = val;
-                });
-              }),
+              _buildDropdownField(
+                "Jenis Takaran Obat",
+                jenisObatList,
+                _jenisObat,
+                (val) {
+                  setState(() {
+                    _jenisObat = val;
+                  });
+                },
+              ),
               const SizedBox(height: 16),
-              _buildTextField("Frekuensi (berapa kali sehari)", _frekuensiController,
-                  keyboardType: TextInputType.number),
+              _buildTextField(
+                "Frekuensi (berapa kali sehari)",
+                _frekuensiController,
+                keyboardType: TextInputType.number,
+              ),
               const SizedBox(height: 16),
               Text("Waktu Minum", style: const TextStyle(color: Colors.white)),
               ListTile(
-                title: const Text("Sebelum Makan",
-                    style: TextStyle(color: Colors.white)),
+                title: const Text(
+                  "Sebelum Makan",
+                  style: TextStyle(color: Colors.white),
+                ),
                 leading: Radio<String>(
                   value: "Sebelum Makan",
                   groupValue: _waktuMinum,
@@ -101,8 +168,10 @@ class _KelolaJadwalObatScreenState extends State<KelolaJadwalObatScreen> {
                 ),
               ),
               ListTile(
-                title: const Text("Sesudah Makan",
-                    style: TextStyle(color: Colors.white)),
+                title: const Text(
+                  "Sesudah Makan",
+                  style: TextStyle(color: Colors.white),
+                ),
                 leading: Radio<String>(
                   value: "Sesudah Makan",
                   groupValue: _waktuMinum,
@@ -117,19 +186,28 @@ class _KelolaJadwalObatScreenState extends State<KelolaJadwalObatScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (_formKey.currentState!.validate() &&
                         _jenisObat != null) {
-                      final result = {
-                        "pasien": _pasienController.text,
+                      final data = {
+                        "pasien": _selectedPasien,
                         "mulai": _tanggalController.text,
                         "durasi": _durasiController.text,
                         "obat": _obatController.text,
                         "jenisObat": _jenisObat,
                         "frekuensi": _frekuensiController.text,
                         "waktuMinum": _waktuMinum,
+                        "createdAt": FieldValue.serverTimestamp(),
                       };
-                      Navigator.pop(context, result);
+                      await _simpanKeFirestore(data);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Jadwal obat berhasil disimpan!"),
+                          ),
+                        );
+                        Navigator.pop(context, data);
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -147,23 +225,38 @@ class _KelolaJadwalObatScreenState extends State<KelolaJadwalObatScreen> {
     );
   }
 
-  Widget _buildDropdownField(String label, List<String> items, String? value,
-      ValueChanged<String?> onChanged) {
+  Widget _buildDropdownField(
+    String label,
+    List<String> items,
+    String? value,
+    ValueChanged<String?> onChanged,
+  ) {
     return DropdownButtonFormField<String>(
       value: value,
       dropdownColor: const Color(0xFF032B45),
       decoration: _inputDecoration(label),
-      items: items
-          .map((item) =>
-              DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(color: Colors.white))))
-          .toList(),
+      items:
+          items
+              .map(
+                (item) => DropdownMenuItem(
+                  value: item,
+                  child: Text(
+                    item,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              )
+              .toList(),
       onChanged: onChanged,
       validator: (val) => val == null || val.isEmpty ? "Wajib dipilih" : null,
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller,
-      {TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    TextInputType keyboardType = TextInputType.text,
+  }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,

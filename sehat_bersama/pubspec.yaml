@@ -30,6 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  firebase_storage: ^12.4.6
   flutter_localizations: # Add this line
     sdk: flutter
   provider: ^6.1.2
