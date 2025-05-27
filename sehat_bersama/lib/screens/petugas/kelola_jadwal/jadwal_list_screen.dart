@@ -37,37 +37,38 @@ class _JadwalListScreenState extends State<JadwalListScreen> {
           .orderBy('tanggal', descending: false)
           .snapshots()
           .listen(
-        (snapshot) {
-          if (!mounted) return;
-          try {
-            final list = snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['id'] = doc.id;
-              return data;
-            }).toList();
-            setState(() {
-              jadwalList = list.cast<Map<String, dynamic>>();
-              _loading = false;
-              _errorMessage = null;
-            });
-          } catch (e) {
-            debugPrint('Error processing snapshot: $e');
-            setState(() {
-              _errorMessage = 'Gagal memproses data: ${e.toString()}';
-              _loading = false;
-            });
-          }
-        },
-        onError: (error) {
-          debugPrint('Stream error: $error');
-          if (mounted) {
-            setState(() {
-              _errorMessage = 'Koneksi terputus: ${error.toString()}';
-              _loading = false;
-            });
-          }
-        },
-      );
+            (snapshot) {
+              if (!mounted) return;
+              try {
+                final list =
+                    snapshot.docs.map((doc) {
+                      final data = doc.data();
+                      data['id'] = doc.id;
+                      return data;
+                    }).toList();
+                setState(() {
+                  jadwalList = list.cast<Map<String, dynamic>>();
+                  _loading = false;
+                  _errorMessage = null;
+                });
+              } catch (e) {
+                debugPrint('Error processing snapshot: $e');
+                setState(() {
+                  _errorMessage = 'Gagal memproses data: ${e.toString()}';
+                  _loading = false;
+                });
+              }
+            },
+            onError: (error) {
+              debugPrint('Stream error: $error');
+              if (mounted) {
+                setState(() {
+                  _errorMessage = 'Koneksi terputus: ${error.toString()}';
+                  _loading = false;
+                });
+              }
+            },
+          );
     } catch (e) {
       debugPrint('Setup listener error: $e');
       setState(() {
@@ -93,11 +94,12 @@ class _JadwalListScreenState extends State<JadwalListScreen> {
 
       if (!mounted) return;
 
-      final list = snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return data;
-      }).toList();
+      final list =
+          snapshot.docs.map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            return data;
+          }).toList();
 
       setState(() {
         jadwalList = list.cast<Map<String, dynamic>>();
@@ -140,9 +142,7 @@ class _JadwalListScreenState extends State<JadwalListScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
       await FirebaseFirestore.instance
@@ -174,17 +174,30 @@ class _JadwalListScreenState extends State<JadwalListScreen> {
     }
   }
 
+  // Fungsi dialog animasi sukses
+  Future<void> _showSuccessDialog() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const _SuccessDialog(),
+    );
+    await Future.delayed(const Duration(milliseconds: 1500));
+    if (mounted) Navigator.of(context, rootNavigator: true).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final today = DateFormat('dd-MM-yyyy').format(DateTime.now());
 
     final todayList = jadwalList.where((j) => j['tanggal'] == today).toList();
-    final upcomingList = jadwalList
-        .where((j) => j['tanggal'] != today && _isAfterToday(j['tanggal']))
-        .toList();
-    final historyList = jadwalList
-        .where((j) => !_isAfterToday(j['tanggal']) && j['tanggal'] != today)
-        .toList();
+    final upcomingList =
+        jadwalList
+            .where((j) => j['tanggal'] != today && _isAfterToday(j['tanggal']))
+            .toList();
+    final historyList =
+        jadwalList
+            .where((j) => !_isAfterToday(j['tanggal']) && j['tanggal'] != today)
+            .toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFF011D32),
@@ -197,16 +210,17 @@ class _JadwalListScreenState extends State<JadwalListScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: _isRefreshing
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Icon(Icons.refresh, color: Colors.white),
+            icon:
+                _isRefreshing
+                    ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                    : const Icon(Icons.refresh, color: Colors.white),
             onPressed: _isRefreshing ? null : _fetchJadwal,
             tooltip: 'Refresh Data',
           ),
@@ -224,12 +238,7 @@ class _JadwalListScreenState extends State<JadwalListScreen> {
               ),
             );
             if (result != null && mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Jadwal baru berhasil ditambahkan'),
-                  backgroundColor: Colors.green,
-                ),
-              );
+              await _showSuccessDialog(); // Tampilkan dialog animasi sukses
             }
           } catch (e) {
             debugPrint('Navigation error: $e');
@@ -266,10 +275,7 @@ class _JadwalListScreenState extends State<JadwalListScreen> {
           children: [
             CircularProgressIndicator(color: Colors.white),
             SizedBox(height: 16),
-            Text(
-              'Memuat jadwal...',
-              style: TextStyle(color: Colors.white70),
-            ),
+            Text('Memuat jadwal...', style: TextStyle(color: Colors.white70)),
           ],
         ),
       );
@@ -280,11 +286,7 @@ class _JadwalListScreenState extends State<JadwalListScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.error_outline,
-              color: Colors.red,
-              size: 64,
-            ),
+            const Icon(Icons.error_outline, color: Colors.red, size: 64),
             const SizedBox(height: 16),
             Text(
               'Terjadi Kesalahan',
@@ -457,13 +459,19 @@ class _JadwalListScreenState extends State<JadwalListScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-            color: isActive ? Colors.green.withOpacity(0.3) : Colors.red.withOpacity(0.3),
+            color:
+                isActive
+                    ? Colors.green.withOpacity(0.3)
+                    : Colors.red.withOpacity(0.3),
             width: 1,
           ),
         ),
         elevation: 4,
         child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
           title: Row(
             children: [
               Expanded(
@@ -473,8 +481,11 @@ class _JadwalListScreenState extends State<JadwalListScreen> {
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
@@ -488,6 +499,8 @@ class _JadwalListScreenState extends State<JadwalListScreen> {
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ),
             ],
@@ -517,7 +530,8 @@ class _JadwalListScreenState extends State<JadwalListScreen> {
                       final updated = await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => KelolaJadwalScreen(jadwal: jadwal),
+                          builder:
+                              (context) => KelolaJadwalScreen(jadwal: jadwal),
                         ),
                       );
                       if (updated != null && mounted) {
@@ -542,39 +556,44 @@ class _JadwalListScreenState extends State<JadwalListScreen> {
                   },
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.redAccent, size: 20),
+                  icon: const Icon(
+                    Icons.delete,
+                    color: Colors.redAccent,
+                    size: 20,
+                  ),
                   tooltip: "Hapus Jadwal",
                   onPressed: () async {
                     final confirm = await showDialog<bool>(
                       context: context,
-                      builder: (context) => AlertDialog(
-                        backgroundColor: const Color(0xFF032B45),
-                        title: const Text(
-                          "Konfirmasi Hapus",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        content: const Text(
-                          "Yakin ingin menghapus jadwal ini?\nTindakan ini tidak dapat dibatalkan.",
-                          style: TextStyle(color: Colors.white70),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text(
-                              "Batal",
+                      builder:
+                          (context) => AlertDialog(
+                            backgroundColor: const Color(0xFF032B45),
+                            title: const Text(
+                              "Konfirmasi Hapus",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            content: const Text(
+                              "Yakin ingin menghapus jadwal ini?\nTindakan ini tidak dapat dibatalkan.",
                               style: TextStyle(color: Colors.white70),
                             ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text(
+                                  "Batal",
+                                  style: TextStyle(color: Colors.white70),
+                                ),
+                              ),
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white,
+                                ),
+                                child: const Text("Hapus"),
+                              ),
+                            ],
                           ),
-                          ElevatedButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
-                            ),
-                            child: const Text("Hapus"),
-                          ),
-                        ],
-                      ),
                     );
                     if (confirm == true) {
                       await _deleteJadwal(jadwal);
@@ -593,39 +612,51 @@ class _JadwalListScreenState extends State<JadwalListScreen> {
   void _showDetailDialog(Map<String, dynamic> jadwal, bool showPasien) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF032B45),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text(
-          "Detail Jadwal",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildDetailRow("Poli", jadwal['poli']),
-              _buildDetailRow("Tanggal", jadwal['tanggal']),
-              _buildDetailRow("Jam", "${jadwal['start']} - ${jadwal['end']}"),
-              _buildDetailRow("Maks Pasien", "${jadwal['maksPasien']}"),
-              _buildDetailRow("Status", jadwal['status'] ?? 'Aktif'),
-              _buildDetailRow("Catatan", jadwal['catatan'] ?? 'Tidak ada catatan'),
-              if (showPasien)
-                _buildDetailRow("Pasien", "(akan diimplementasi)"),
+      builder:
+          (_) => AlertDialog(
+            backgroundColor: const Color(0xFF032B45),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            title: const Text(
+              "Detail Jadwal",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildDetailRow("Poli", jadwal['poli']),
+                  _buildDetailRow("Tanggal", jadwal['tanggal']),
+                  _buildDetailRow(
+                    "Jam",
+                    "${jadwal['start']} - ${jadwal['end']}",
+                  ),
+                  _buildDetailRow("Maks Pasien", "${jadwal['maksPasien']}"),
+                  _buildDetailRow("Status", jadwal['status'] ?? 'Aktif'),
+                  _buildDetailRow(
+                    "Catatan",
+                    jadwal['catatan'] ?? 'Tidak ada catatan',
+                  ),
+                  if (showPasien)
+                    _buildDetailRow("Pasien", "(akan diimplementasi)"),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  "Tutup",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              "Tutup",
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -646,12 +677,126 @@ class _JadwalListScreenState extends State<JadwalListScreen> {
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(color: Colors.white),
-            ),
+            child: Text(value, style: const TextStyle(color: Colors.white)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Widget dialog animasi sukses
+class _SuccessDialog extends StatefulWidget {
+  const _SuccessDialog();
+
+  @override
+  State<_SuccessDialog> createState() => _SuccessDialogState();
+}
+
+class _SuccessDialogState extends State<_SuccessDialog>
+    with TickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late AnimationController _checkController;
+  late Animation<double> _scale;
+  late Animation<double> _checkAnimation;
+  late AnimationController _fadeController;
+  late Animation<double> _fade;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    )..forward();
+    _scale = CurvedAnimation(
+      parent: _scaleController,
+      curve: Curves.elasticOut,
+    );
+
+    _checkController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _checkAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _checkController, curve: Curves.easeOutBack),
+    );
+
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _fade = CurvedAnimation(parent: _fadeController, curve: Curves.easeIn);
+
+    Future.delayed(const Duration(milliseconds: 250), () {
+      if (mounted) _checkController.forward();
+      if (mounted) _fadeController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    _checkController.dispose();
+    _fadeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: ScaleTransition(
+        scale: _scale,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.13),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedBuilder(
+                animation: _checkAnimation,
+                builder: (context, child) {
+                  return Transform.rotate(
+                    angle: (1 - _checkAnimation.value) * 1.5,
+                    child: Opacity(
+                      opacity: _checkAnimation.value.clamp(0.0, 1.0),
+                      child: Icon(
+                        Icons.check_circle_rounded,
+                        color: Colors.green,
+                        size: 40 + 16 * _checkAnimation.value,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 14),
+              FadeTransition(
+                opacity: _fade,
+                child: const Text(
+                  "Jadwal berhasil\nditambahkan!",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF011D32),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

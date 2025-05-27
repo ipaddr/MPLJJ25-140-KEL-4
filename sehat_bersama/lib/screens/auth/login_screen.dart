@@ -66,6 +66,49 @@ class _LoginScreenState extends State<LoginScreen> {
     return null;
   }
 
+  // Dialog loading interaktif
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 4,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Color(0xFF0F5B99),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Sedang memproses login...",
+                    style: TextStyle(fontSize: 16, color: Colors.black87),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   // Fungsi Login dengan Firebase
   Future<void> _loginUser() async {
     if (!_formKey.currentState!.validate()) {
@@ -76,6 +119,8 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
+    _showLoadingDialog(); // Tampilkan dialog loading
+
     try {
       // Sign in dengan Firebase Auth
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
@@ -84,10 +129,11 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       // Verifikasi NIK di Firestore
-      DocumentSnapshot userDoc = await _firestore
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .get();
+      DocumentSnapshot userDoc =
+          await _firestore
+              .collection('users')
+              .doc(userCredential.user!.uid)
+              .get();
 
       if (userDoc.exists) {
         Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
@@ -96,31 +142,45 @@ class _LoginScreenState extends State<LoginScreen> {
         if (storedNIK != nikController.text.trim()) {
           // NIK tidak cocok
           await _auth.signOut();
+          Navigator.of(
+            context,
+            rootNavigator: true,
+          ).pop(); // Tutup dialog loading
           _showErrorDialog('NIK tidak sesuai dengan akun ini');
           return;
         }
 
         // Login berhasil
+        Navigator.of(
+          context,
+          rootNavigator: true,
+        ).pop(); // Tutup dialog loading
         _showSuccessDialog('Login berhasil!');
-        
+
         // Navigate ke dashboard setelah delay singkat
         Future.delayed(const Duration(seconds: 1), () {
           if (mounted) {
             Navigator.pushReplacementNamed(context, '/dashboard');
           }
         });
-
       } else {
         // User data tidak ditemukan di Firestore
         await _auth.signOut();
-        _showErrorDialog('Data pengguna tidak ditemukan. Silakan daftar terlebih dahulu.');
+        Navigator.of(
+          context,
+          rootNavigator: true,
+        ).pop(); // Tutup dialog loading
+        _showErrorDialog(
+          'Data pengguna tidak ditemukan. Silakan daftar terlebih dahulu.',
+        );
       }
-
     } on FirebaseAuthException catch (e) {
+      Navigator.of(context, rootNavigator: true).pop(); // Tutup dialog loading
       String errorMessage;
       switch (e.code) {
         case 'user-not-found':
-          errorMessage = 'Akun tidak ditemukan. Silakan daftar terlebih dahulu.';
+          errorMessage =
+              'Akun tidak ditemukan. Silakan daftar terlebih dahulu.';
           break;
         case 'wrong-password':
           errorMessage = 'Password salah. Silakan coba lagi.';
@@ -142,6 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       _showErrorDialog(errorMessage);
     } catch (e) {
+      Navigator.of(context, rootNavigator: true).pop(); // Tutup dialog loading
       _showErrorDialog('Terjadi kesalahan tidak terduga: $e');
     } finally {
       if (mounted) {
@@ -193,7 +254,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // Reset Password
   Future<void> _resetPassword() async {
     String email = emailController.text.trim();
-    
+
     if (email.isEmpty) {
       _showErrorDialog('Masukkan email terlebih dahulu');
       return;
@@ -227,7 +288,10 @@ class _LoginScreenState extends State<LoginScreen> {
         leading: IconButton(
           icon: SvgPicture.asset(
             'assets/icons/back.svg',
-            colorFilter: const ColorFilter.mode(Color(0xFF0F5B99), BlendMode.srcIn),
+            colorFilter: const ColorFilter.mode(
+              Color(0xFF0F5B99),
+              BlendMode.srcIn,
+            ),
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -240,10 +304,7 @@ class _LoginScreenState extends State<LoginScreen> {
           key: _formKey,
           child: Column(
             children: [
-              Image.asset(
-                'assets/images/logo.png',
-                height: 100,
-              ),
+              Image.asset('assets/images/logo.png', height: 100),
               const SizedBox(height: 8),
               Text(
                 "Selamat Datang di Sehat Bersama",
@@ -296,7 +357,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   hintText: "Password Sehat Bersama",
                   prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
                     onPressed: () {
                       setState(() {
                         _obscurePassword = !_obscurePassword;
@@ -330,23 +395,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _loginUser,
-                  child: _isLoading
-                      ? const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            ),
-                            SizedBox(width: 12),
-                            Text("Memproses..."),
-                          ],
-                        )
-                      : const Text("Masuk"),
+                  child: const Text("Masuk"),
                 ),
               ),
 

@@ -12,6 +12,7 @@ class _CetakAntreanScreenState extends State<CetakAntreanScreen> {
   Map<String, dynamic>? _antrean;
   bool _loading = true;
   bool _checkinSuccess = false;
+  int? _maksPasien;
 
   @override
   void didChangeDependencies() {
@@ -23,11 +24,42 @@ class _CetakAntreanScreenState extends State<CetakAntreanScreen> {
         _loading = false;
         _checkinSuccess = _antrean?['sudahCheckin'] == true;
       });
+      _fetchMaksPasien(_antrean?['jadwalId']);
     } else {
       setState(() {
         _loading = false;
       });
     }
+  }
+
+  Future<void> _fetchMaksPasien(String? jadwalId) async {
+    if (jadwalId == null) return;
+    try {
+      final doc =
+          await FirebaseFirestore.instance
+              .collection('penjadwalan')
+              .doc(jadwalId)
+              .get();
+      if (doc.exists && mounted) {
+        setState(() {
+          _maksPasien = int.tryParse(
+            doc.data()?['maksPasien']?.toString() ?? '0',
+          );
+        });
+      }
+    } catch (e) {
+      debugPrint('Gagal mengambil maksPasien: $e');
+    }
+  }
+
+  Future<void> _showSuccessDialog() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const _CheckinSuccessDialog(),
+    );
+    await Future.delayed(const Duration(milliseconds: 1500));
+    if (mounted) Navigator.of(context, rootNavigator: true).pop();
   }
 
   Future<void> _handleCheckin() async {
@@ -47,9 +79,7 @@ class _CetakAntreanScreenState extends State<CetakAntreanScreen> {
         _loading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Check-in berhasil!')));
+        await _showSuccessDialog();
       }
     } catch (e) {
       setState(() {
@@ -66,6 +96,14 @@ class _CetakAntreanScreenState extends State<CetakAntreanScreen> {
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF07477C);
+
+    // Hitung peserta dilayani dan sisa antrean
+    int pesertaDilayani =
+        int.tryParse(_antrean?['pesertaDilayani']?.toString() ?? '0') ?? 0;
+    int sisaAntrean =
+        (_maksPasien != null)
+            ? (_maksPasien! - pesertaDilayani)
+            : int.tryParse(_antrean?['sisaAntrean']?.toString() ?? '0') ?? 0;
 
     return Scaffold(
       appBar: AppBar(
@@ -185,12 +223,12 @@ class _CetakAntreanScreenState extends State<CetakAntreanScreen> {
                       _StatBox(
                         icon: Icons.groups,
                         label: "Sisa Antrean",
-                        value: _antrean?['sisaAntrean']?.toString() ?? "-",
+                        value: sisaAntrean.toString(),
                       ),
                       _StatBox(
                         icon: Icons.person,
                         label: "Peserta Dilayani",
-                        value: _antrean?['pesertaDilayani']?.toString() ?? "-",
+                        value: pesertaDilayani.toString(),
                       ),
                     ],
                   ),
@@ -308,6 +346,123 @@ class _StatBox extends StatelessWidget {
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ],
+    );
+  }
+}
+
+// Animasi dialog sukses check-in
+class _CheckinSuccessDialog extends StatefulWidget {
+  const _CheckinSuccessDialog();
+
+  @override
+  State<_CheckinSuccessDialog> createState() => _CheckinSuccessDialogState();
+}
+
+class _CheckinSuccessDialogState extends State<_CheckinSuccessDialog>
+    with TickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late AnimationController _checkController;
+  late Animation<double> _scale;
+  late Animation<double> _checkAnimation;
+  late AnimationController _fadeController;
+  late Animation<double> _fade;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    )..forward();
+    _scale = CurvedAnimation(
+      parent: _scaleController,
+      curve: Curves.elasticOut,
+    );
+
+    _checkController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _checkAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _checkController, curve: Curves.easeOutBack),
+    );
+
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _fade = CurvedAnimation(parent: _fadeController, curve: Curves.easeIn);
+
+    Future.delayed(const Duration(milliseconds: 250), () {
+      if (mounted) _checkController.forward();
+      if (mounted) _fadeController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    _checkController.dispose();
+    _fadeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: ScaleTransition(
+        scale: _scale,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.13),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedBuilder(
+                animation: _checkAnimation,
+                builder: (context, child) {
+                  return Transform.rotate(
+                    angle: (1 - _checkAnimation.value) * 1.5,
+                    child: Opacity(
+                      opacity: _checkAnimation.value.clamp(0.0, 1.0),
+                      child: Icon(
+                        Icons.check_circle_rounded,
+                        color: Colors.green,
+                        size: 40 + 16 * _checkAnimation.value,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 14),
+              FadeTransition(
+                opacity: _fade,
+                child: const Text(
+                  "Check-in\nberhasil!",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF011D32),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

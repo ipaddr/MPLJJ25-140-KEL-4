@@ -115,7 +115,6 @@ class _MedicationReminderScreenState extends State<MedicationReminderScreen> {
   }
 
   Future<void> _hapusPengingatObat(Medication medication) async {
-    // Cari dokumen berdasarkan field unik (pasien, obat, jam)
     final snapshot =
         await FirebaseFirestore.instance
             .collection('jadwal_obat')
@@ -413,6 +412,16 @@ class _AddMedicationFlowState extends State<AddMedicationFlow> {
     await FirebaseFirestore.instance.collection('jadwal_obat').add(data);
   }
 
+  Future<void> _showSuccessDialog() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const _SuccessDialog(),
+    );
+    await Future.delayed(const Duration(milliseconds: 1500));
+    if (mounted) Navigator.of(context, rootNavigator: true).pop();
+  }
+
   @override
   void dispose() {
     _obatController.dispose();
@@ -601,13 +610,7 @@ class _AddMedicationFlowState extends State<AddMedicationFlow> {
                               };
                               await _simpanKeFirestore(data);
                               if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Jadwal obat berhasil disimpan!",
-                                    ),
-                                  ),
-                                );
+                                await _showSuccessDialog();
                                 Navigator.pop(context, true);
                               }
                             }
@@ -633,6 +636,123 @@ class _AddMedicationFlowState extends State<AddMedicationFlow> {
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       filled: true,
       fillColor: Colors.grey[100],
+    );
+  }
+}
+
+// Widget dialog animasi sukses
+class _SuccessDialog extends StatefulWidget {
+  const _SuccessDialog();
+
+  @override
+  State<_SuccessDialog> createState() => _SuccessDialogState();
+}
+
+class _SuccessDialogState extends State<_SuccessDialog>
+    with TickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late AnimationController _checkController;
+  late Animation<double> _scale;
+  late Animation<double> _checkAnimation;
+  late AnimationController _fadeController;
+  late Animation<double> _fade;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    )..forward();
+    _scale = CurvedAnimation(
+      parent: _scaleController,
+      curve: Curves.elasticOut,
+    );
+
+    _checkController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _checkAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _checkController, curve: Curves.easeOutBack),
+    );
+
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _fade = CurvedAnimation(parent: _fadeController, curve: Curves.easeIn);
+
+    Future.delayed(const Duration(milliseconds: 250), () {
+      if (mounted) _checkController.forward();
+      if (mounted) _fadeController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    _checkController.dispose();
+    _fadeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: ScaleTransition(
+        scale: _scale,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.13),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedBuilder(
+                animation: _checkAnimation,
+                builder: (context, child) {
+                  return Transform.rotate(
+                    angle: (1 - _checkAnimation.value) * 1.5,
+                    child: Opacity(
+                      opacity: _checkAnimation.value.clamp(0.0, 1.0),
+                      child: Icon(
+                        Icons.check_circle_rounded,
+                        color: Colors.green,
+                        size: 40 + 16 * _checkAnimation.value,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 14),
+              FadeTransition(
+                opacity: _fade,
+                child: const Text(
+                  "Jadwal obat\nberhasil disimpan!",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF011D32),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
