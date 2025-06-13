@@ -42,7 +42,7 @@
 
 <ul>
   <li>Flutter (Frontend)</li>
-  <li>Node.js (Backend)</li>
+  <li>Flutter (Backend)</li>
   <li>Firebase (Authentication, Firestore, Storage)</li>
   <li>Google Gemini API</li>
   <li>NEWS API</li>
