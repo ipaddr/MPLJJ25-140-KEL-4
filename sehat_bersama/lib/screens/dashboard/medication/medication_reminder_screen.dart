@@ -450,28 +450,54 @@ class _AddMedicationFlowState extends State<AddMedicationFlow> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      DropdownButtonFormField<String>(
-                        value: _selectedPasien,
-                        decoration: _inputDecoration("Nama Pasien"),
-                        items:
-                            _listPasien
-                                .map(
-                                  (nama) => DropdownMenuItem(
-                                    value: nama,
-                                    child: Text(nama),
-                                  ),
-                                )
-                                .toList(),
-                        onChanged: (val) {
-                          setState(() {
-                            _selectedPasien = val;
+                      Autocomplete<String>(
+                        optionsBuilder: (TextEditingValue textEditingValue) {
+                          if (textEditingValue.text == '') {
+                            return const Iterable<String>.empty();
+                          }
+                          return _listPasien.where((String pasien) {
+                            return pasien.toLowerCase().contains(
+                              textEditingValue.text.toLowerCase(),
+                            );
                           });
                         },
-                        validator:
-                            (val) =>
-                                val == null || val.isEmpty
-                                    ? "Wajib dipilih"
-                                    : null,
+                        onSelected: (String selection) {
+                          setState(() {
+                            _selectedPasien = selection;
+                          });
+                        },
+                        fieldViewBuilder: (
+                          context,
+                          controller,
+                          focusNode,
+                          onEditingComplete,
+                        ) {
+                          controller.text = _selectedPasien ?? '';
+                          return TextFormField(
+                            controller: controller,
+                            focusNode: focusNode,
+                            decoration: _inputDecoration("Nama Pasien"),
+                            style: const TextStyle(
+                              color: Color(
+                                0xFF07477C,
+                              ), // Warna teks nama pasien
+                              fontWeight: FontWeight.bold,
+                            ),
+                            onEditingComplete: onEditingComplete,
+                            onChanged: (value) {
+                              _selectedPasien = value;
+                            },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Wajib diisi';
+                              }
+                              if (!_listPasien.contains(value)) {
+                                return 'Pilih nama pasien yang tersedia';
+                              }
+                              return null;
+                            },
+                          );
+                        },
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
